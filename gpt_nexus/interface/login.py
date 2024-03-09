@@ -1,7 +1,7 @@
 import time
 
 import streamlit as st
-from chat_base.chat_system import ChatSystem
+from nexus_base.chat_system import ChatSystem
 from streamlit_js_eval import set_cookie
 
 

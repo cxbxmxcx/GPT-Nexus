@@ -1,8 +1,8 @@
 from datetime import datetime
 
-from chat_base.action_manager import ActionManager
-from chat_base.agent_manager import AgentManager
-from chat_base.chat_models import (
+from nexus_base.action_manager import ActionManager
+from nexus_base.agent_manager import AgentManager
+from nexus_base.chat_models import (
     ChatParticipants,
     Message,
     Notification,
@@ -12,6 +12,8 @@ from chat_base.chat_models import (
 )
 from peewee import *
 
+from gpt_nexus.nexus_base.profile_manager import ProfileManager
+
 
 class ChatSystem:
     def __init__(self):
@@ -20,6 +22,23 @@ class ChatSystem:
 
         self.action_manager = ActionManager()
         self.actions = self.load_actions()
+
+        self.profile_manager = ProfileManager()
+        self.profiles = self.load_profiles()
+
+    def load_profiles(self):
+        profiles = self.profile_manager.agent_profiles
+        print(f"Loaded {len(profiles)} profiles.")
+        return profiles
+
+    def get_profile(self, profile_name):
+        profile = self.profile_manager.get_agent_profile(profile_name)
+        if not profile:
+            raise ValueError(f"Profile '{profile_name}' not found.")
+        return profile
+
+    def get_profile_names(self):
+        return self.profile_manager.get_agent_profile_names()
 
     def load_actions(self):
         actions = self.action_manager.get_actions()
@@ -53,6 +72,14 @@ class ChatSystem:
 
     def get_agent_names(self):
         return self.agent_manager.get_agent_names()
+
+    def get_action_names(self):
+        return [action["name"] for action in self.actions]
+
+    def get_actions(self, action_names=None):
+        if action_names is None:
+            return self.actions
+        return [action for action in self.actions if action["name"] in action_names]
 
     def add_participant(
         self,

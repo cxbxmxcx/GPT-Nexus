@@ -6,18 +6,14 @@ class BaseAgent:
     def __init__(self, chat_history=None):
         self._chat_history = chat_history or []
         self.last_message = ""
-        self.system_message = (
-            "You are a chat bot. Your goal is to figure out what people need."
-        )
         self._actions = []
-        # self.chat = self.initialize_chat_history(self.system_message)
-
-    def initialize_chat_history(self, system_message):
-        # Initialize chat history with the system message or any other initial setup
-        chat_history = [{"role": "system", "content": system_message}]
-        return chat_history
+        self._profile = None
 
     async def get_response(self, user_input, thread_id=None):
+        # Placeholder method to be implemented by subclasses
+        raise NotImplementedError("This method should be implemented by subclasses.")
+
+    async def get_semantic_response(self, prompt, thread_id=None):
         # Placeholder method to be implemented by subclasses
         raise NotImplementedError("This method should be implemented by subclasses.")
 
@@ -66,10 +62,18 @@ class BaseAgent:
         # Property to get the name of the agent
         return self.__class__.__name__
 
+    @property
+    def profile(self):
+        return self._profile
+
+    @profile.setter
+    def profile(self, profile):
+        self._profile = profile
+
 
 class AgentManager:
     def __init__(self):
-        agent_directory = os.path.join(os.path.dirname(__file__), "agents")
+        agent_directory = os.path.join(os.path.dirname(__file__), "nexus_agents")
         self.agents = self._load_agents(agent_directory)
 
     def get_agent(self, agent_name):
