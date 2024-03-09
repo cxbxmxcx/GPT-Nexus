@@ -69,11 +69,12 @@ emoji_faces = [
 
 
 def login_page():
-    if username := get_cookie("username", "username"):
-        st.session_state["username"] = username
-        st.rerun()
-
     chat = ChatSystem()
+    if username := get_cookie("username", "username"):
+        user = chat.get_participant(username)
+        if user:
+            st.session_state["username"] = username
+            st.rerun()
 
     st.title("Login or Create New User")
 
