@@ -87,7 +87,10 @@ class ChatSystem:
             return True
 
     def get_participant(self, username):
-        return ChatParticipants.get(ChatParticipants.username == username)
+        try:
+            return ChatParticipants.get(ChatParticipants.username == username)
+        except ChatParticipants.DoesNotExist:
+            return None
 
     def create_thread(self, title, participant_id):
         with db.atomic():
