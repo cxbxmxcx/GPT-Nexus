@@ -12,6 +12,9 @@ streamlit = "^1.32.0"
 openai = "^1.13.3"
 streamlit-js-eval = "^0.1.7"
 python-dotenv = "^1.0.1"
+pyyaml = "^6.0.1"
+requests = "^2.31.0"
+wikipedia = "^1.4.0"
 
 
 [build-system]
