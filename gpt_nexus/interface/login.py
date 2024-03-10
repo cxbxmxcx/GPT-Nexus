@@ -76,6 +76,7 @@ def login_page():
             st.session_state["username"] = username
             st.rerun()
 
+    st.sidebar.title("GPT Nexus -> Login")
     st.title("Login or Create New User")
 
     menu = ["Login", "Create New User"]

@@ -5,9 +5,18 @@ import yaml
 
 class AgentProfile:
     def __init__(
-        self, name, persona, preferred_functions, knowledge, memory, planners, feedback
+        self,
+        name,
+        avatar,
+        persona,
+        preferred_functions,
+        knowledge,
+        memory,
+        planners,
+        feedback,
     ):
         self.name = name
+        self.avatar = None
         self.persona = persona
         self.preferred_functions = preferred_functions
         self.knowledge = knowledge
@@ -36,6 +45,7 @@ class ProfileManager:
             profile = profile_data["agentProfile"]
             agent = AgentProfile(
                 name=profile.get("name", ""),
+                avatar=profile.get("avatar", ""),
                 persona=profile.get("persona", ""),
                 preferred_functions=profile.get("preferredFunctions", []),
                 knowledge=profile.get("knowledge", None),

@@ -39,7 +39,7 @@ def chat_page(username):
         st.session_state["threads"].insert(0, thread)
         select_thread(new_thread_id)
 
-    st.sidebar.title("Chatter -> Chat")
+    st.sidebar.title("GPT Nexus -> Chat")
     with st.sidebar.container(height=1000):
         st.button("+ New Chat", on_click=create_new_thread)
         # Sidebar UI for thread management
@@ -66,7 +66,7 @@ def chat_page(username):
             st.title(current_thread.title)
             # chat_agent = current_thread.agent
 
-            with st.container(height=1000):
+            with st.container(height=500):
                 # Display thread chat history
                 messages = chat.read_messages(current_thread.thread_id)
                 for message in messages:
@@ -78,10 +78,15 @@ def chat_page(username):
                 placeholder = st.empty()
 
             with st.container():
-                col1, col2, col3, col4 = st.columns([1, 1, 1, 9])
+                col1, col2, col3, col4 = st.columns([4, 1, 1, 3])
 
-                # Place a dropdown in the first column
+                # Place a text input in the second column
                 with col1:
+                    user_input = st.chat_input(
+                        "Type your message here:", key="msg_input"
+                    )
+                # Place a dropdown in the first column
+                with col2:
                     agents = chat.get_agent_names()
                     selected_agent = st.selectbox(
                         "Choose an agent:",
@@ -90,7 +95,7 @@ def chat_page(username):
                         label_visibility="collapsed",
                         help="Choose an agent to chat with.",
                     )
-                with col2:
+                with col3:
                     profiles = chat.get_profile_names()
                     selected_profile = st.selectbox(
                         "Choose an agent profile:",
@@ -99,7 +104,7 @@ def chat_page(username):
                         label_visibility="collapsed",
                         help="Choose a profile for your agent.",
                     )
-                with col3:
+                with col4:
                     action_names = chat.get_action_names()
                     selected_action_names = st.multiselect(
                         "Select actions:",
@@ -110,11 +115,6 @@ def chat_page(username):
                     )
                     selected_actions = chat.get_actions(selected_action_names)
 
-                # Place a text input in the second column
-                with col4:
-                    user_input = st.chat_input(
-                        "Type your message here:", key="msg_input"
-                    )
                 chat_agent = chat.get_agent(selected_agent)
                 chat_agent.profile = chat.get_profile(selected_profile)
                 chat_agent.chat_history = messages

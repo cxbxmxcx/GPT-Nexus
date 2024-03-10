@@ -5,23 +5,23 @@ from gpt_nexus.nexus_base.action_manager import agent_action
 
 @agent_action
 def search_wikipedia(query):
-    """Searches Wikipedia for the given query and returns the page search results."""
+    """Searches Wikipedia for the given query and returns a list of matching page_ids."""
     wikipedia.set_lang("en")
     search_results = wikipedia.search(query)
     return search_results
 
 
 @agent_action
-def get_wikipedia_summary(query):
-    """Gets the summary of the Wikipedia page for the given page."""
+def get_wikipedia_summary(page_id):
+    """Gets the summary of the Wikipedia page for the given page_id."""
     wikipedia.set_lang("en")
-    summary = wikipedia.summary(query)
+    summary = wikipedia.summary(page_id)
     return summary
 
 
 @agent_action
-def get_wikipedia_page(query):
-    """Gets the full content of the Wikipedia page for the given page query."""
+def get_wikipedia_page(page_id):
+    """Gets the full content of the Wikipedia page for the given page_id."""
     wikipedia.set_lang("en")
-    page = wikipedia.page(query)
+    page = wikipedia.page(page_id)
     return page.content
