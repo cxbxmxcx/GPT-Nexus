@@ -63,54 +63,53 @@ def chat_page(username):
     if st.session_state["current_thread_id"] is not None:
         current_thread = chat.get_thread(st.session_state["current_thread_id"])
         if current_thread:
-            st.title(current_thread.title)
             # chat_agent = current_thread.agent
 
-            with st.container(height=500):
-                # Display thread chat history
-                messages = chat.read_messages(current_thread.thread_id)
-                for message in messages:
-                    with st.chat_message(
-                        message.author.username, avatar=message.author.avatar
-                    ):
-                        st.markdown(message.content)
-
-                placeholder = st.empty()
-
             with st.container():
-                col1, col2, col3, col4 = st.columns([4, 1, 1, 3])
+                col_chat, col_agent = st.columns([4, 2])
 
-                # Place a text input in the second column
-                with col1:
+                with col_chat:
+                    st.title(current_thread.title)
+                    with st.container(height=500):
+                        messages = chat.read_messages(current_thread.thread_id)
+                        for message in messages:
+                            with st.chat_message(
+                                message.author.username, avatar=message.author.avatar
+                            ):
+                                st.markdown(message.content)
+
+                        placeholder = st.empty()
+
                     user_input = st.chat_input(
                         "Type your message here:", key="msg_input"
                     )
-                # Place a dropdown in the first column
-                with col2:
+
+                with col_agent:
+                    st.title("Agent Settings")
                     agents = chat.get_agent_names()
                     selected_agent = st.selectbox(
-                        "Choose an agent:",
+                        "Choose an agent engine:",
                         agents,
                         key="agents",
-                        label_visibility="collapsed",
+                        # label_visibility="collapsed",
                         help="Choose an agent to chat with.",
                     )
-                with col3:
+
                     profiles = chat.get_profile_names()
                     selected_profile = st.selectbox(
                         "Choose an agent profile:",
                         profiles,
                         key="profiles",
-                        label_visibility="collapsed",
+                        # label_visibility="collapsed",
                         help="Choose a profile for your agent.",
                     )
-                with col4:
+
                     action_names = chat.get_action_names()
                     selected_action_names = st.multiselect(
                         "Select actions:",
                         action_names,
                         key="actions",
-                        label_visibility="collapsed",
+                        # label_visibility="collapsed",
                         help="Choose the actions the agent can use.",
                     )
                     selected_actions = chat.get_actions(selected_action_names)

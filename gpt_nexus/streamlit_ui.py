@@ -1,8 +1,7 @@
 import streamlit as st
-
-from interface.agent import agent_page
-from interface.chat import chat_page
-from interface.login import login_page
+from ui.agent import agent_page
+from ui.chat import chat_page
+from ui.login import login_page
 
 
 def main():
