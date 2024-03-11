@@ -24,7 +24,7 @@ To begin using GPT Nexus, you need to set up a Python virtual environment (versi
 
 ```bash
 # Install GPT Nexus directly from the GitHub repository
-pip install git+https://github.com/cxbxmxcx/GPT-Nexus.git@chapter_5#egg=gpt-nexus
+pip install git+https://github.com/cxbxmxcx/GPT-Nexus.git
 
 # Set your OpenAI API Key
 export OPENAI_API_KEY="<your API key>"
@@ -44,8 +44,8 @@ After running the application, a web interface will launch, allowing you to log 
 For those interested in contributing to GPT Nexus or customizing it further:
 
 ```bash
-# Clone the GPT Nexus repository for the specific chapter
-git clone -b chapter_5 --single-branch https://github.com/cxbxmxcx/GPT-Nexus.git
+# Clone the GPT Nexus repository 
+git clone https://github.com/cxbxmxcx/GPT-Nexus.git
 
 # Install the cloned repository in editable mode
 pip install -e GPT-Nexus
