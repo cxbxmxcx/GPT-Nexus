@@ -1,8 +1,10 @@
 from datetime import datetime
 
-from nexus_base.action_manager import ActionManager
-from nexus_base.agent_manager import AgentManager
-from nexus_base.chat_models import (
+from peewee import *
+
+from gpt_nexus.nexus_base.action_manager import ActionManager
+from gpt_nexus.nexus_base.agent_manager import AgentManager
+from gpt_nexus.nexus_base.chat_models import (
     ChatParticipants,
     Message,
     Notification,
@@ -10,8 +12,6 @@ from nexus_base.chat_models import (
     Thread,
     db,
 )
-from peewee import *
-
 from gpt_nexus.nexus_base.profile_manager import ProfileManager
 
 

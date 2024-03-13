@@ -1,4 +1,4 @@
-from nexus_base.action_manager import agent_action
+from gpt_nexus.nexus_base.action_manager import agent_action
 
 
 @agent_action

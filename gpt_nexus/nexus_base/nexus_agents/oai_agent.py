@@ -2,9 +2,10 @@ import json
 import time
 
 from dotenv import load_dotenv
-from nexus_base.agent_manager import BaseAgent
-from nexus_base.chat_models import Message
 from openai import OpenAI
+
+from gpt_nexus.nexus_base.agent_manager import BaseAgent
+from gpt_nexus.nexus_base.chat_models import Message
 
 load_dotenv()  # loading and setting the api key can be done in one step
 

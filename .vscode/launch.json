@@ -12,11 +12,19 @@
       "console": "integratedTerminal"
     },
     {
-      "name": "Python Debugger: Module",
+      "name": "Python Debugger: Streamlit UI",
       "type": "debugpy",
       "request": "launch",
       "module": "streamlit",
       "args": ["run", "gpt_nexus/streamlit_ui.py"]
+    },
+    {
+      "name": "Python Debugger: FastAPI API",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": ["gpt_nexus.api.main:app", "--reload" ]
     }
+
   ]
 }

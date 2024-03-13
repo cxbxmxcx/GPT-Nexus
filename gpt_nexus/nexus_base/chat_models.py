@@ -29,11 +29,31 @@ class ChatParticipants(BaseModel):
     avatar = CharField(null=True)
     timestamp = DateTimeField(constraints=[SQL("DEFAULT CURRENT_TIMESTAMP")])
 
+    def to_dict():
+        return {
+            "user_id": self.user_id,
+            "username": self.username,
+            "display_name": self.display_name,
+            "participant_type": self.participant_type,
+            "email": self.email,
+            "status": self.status,
+            "profile_icon": self.profile_icon,
+            "avatar": self.avatar,
+            "timestamp": self.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+        }
+
 
 class Thread(BaseModel):
     thread_id = AutoField()
     title = CharField(unique=True)
     timestamp = DateTimeField(constraints=[SQL("DEFAULT CURRENT_TIMESTAMP")])
+
+    def to_dict(self):
+        return {
+            "thread_id": self.thread_id,
+            "title": self.title,
+            "timestamp": self.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+        }
 
 
 class Message(BaseModel):
@@ -42,6 +62,15 @@ class Message(BaseModel):
     role = CharField()  # user, agent, system
     content = TextField()
     timestamp = DateTimeField(constraints=[SQL("DEFAULT CURRENT_TIMESTAMP")])
+
+    def to_dict(self):
+        return {
+            "thread_id": self.thread.thread_id,
+            "author": self.author.username,
+            "role": self.role,
+            "content": self.content,
+            "timestamp": self.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+        }
 
 
 class Subscriber(BaseModel):
