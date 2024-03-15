@@ -1,5 +1,12 @@
 # GPT Nexus: Open-Source Agent Platform
 
+![Build Status](https://travis-ci.com/cxbxmxcx/GPT-Nexus.svg?branch=main)
+![License](https://img.shields.io/github/license/cxbxmxcx/GPT-Nexus)
+![Python Version](https://img.shields.io/pypi/pyversions/GPT-Nexus)
+![Issues](https://img.shields.io/github/issues/cxbxmxcx/GPT-Nexus)
+![Pull Requests](https://img.shields.io/github/issues-pr/cxbxmxcx/GPT-Nexus)
+![Code Size](https://img.shields.io/github/languages/code-size/cxbxmxcx/GPT-Nexus)
+
 ## Introduction
 
 GPT Nexus is an innovative, open-source platform developed to assist in the development, testing, and hosting of GPT Agents. It is being developed in tandem with writing the book GPT Agents In Action from Manning Publications. The platform is built upon the Python web application framework Streamlit, and offers a user-friendly chat and dashboard interface. This platform facilitates the creation of intelligent dashboards, prototypes, and GPT chat applications, making it a versatile tool for developers at all levels.
