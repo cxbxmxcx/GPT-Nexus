@@ -6,5 +6,6 @@ agentProfile:
     - recommend    
   knowledge: null  # Placeholder for knowledge structure/details
   memory: null  # Placeholder for memory structure/details
+  evaluators: null  # Placeholder for evaluation structure/details
   planners: null  # Placeholder for planners structure/details
   feedback: null  # Placeholder for feedback structure/details

@@ -12,6 +12,7 @@ class AgentProfile:
         actions,
         knowledge,
         memory,
+        evaluators,
         planners,
         feedback,
     ):
@@ -21,6 +22,7 @@ class AgentProfile:
         self.actions = actions
         self.knowledge = knowledge
         self.memory = memory
+        self.evalutors = evaluators
         self.planners = planners
         self.feedback = feedback
 
@@ -50,6 +52,7 @@ class ProfileManager:
                 actions=profile.get("actions", []),
                 knowledge=profile.get("knowledge", None),
                 memory=profile.get("memory", None),
+                evaluators=profile.get("evaluators", None),
                 planners=profile.get("planners", None),
                 feedback=profile.get("feedback", None),
             )
