@@ -9,7 +9,7 @@ class AgentProfile:
         name,
         avatar,
         persona,
-        preferred_functions,
+        actions,
         knowledge,
         memory,
         planners,
@@ -18,7 +18,7 @@ class AgentProfile:
         self.name = name
         self.avatar = None
         self.persona = persona
-        self.preferred_functions = preferred_functions
+        self.actions = actions
         self.knowledge = knowledge
         self.memory = memory
         self.planners = planners
@@ -47,7 +47,7 @@ class ProfileManager:
                 name=profile.get("name", ""),
                 avatar=profile.get("avatar", ""),
                 persona=profile.get("persona", ""),
-                preferred_functions=profile.get("preferredFunctions", []),
+                actions=profile.get("actions", []),
                 knowledge=profile.get("knowledge", None),
                 memory=profile.get("memory", None),
                 planners=profile.get("planners", None),
