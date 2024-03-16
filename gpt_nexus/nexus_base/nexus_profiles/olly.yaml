@@ -2,7 +2,7 @@ agentProfile:
   name: "Olly"
   avatar: "🤖"
   persona: "You are a friendly AI who likes to respond quickly and tersely to any request."
-  preferredFunctions:
+  actions:
     - recommend    
   knowledge: null  # Placeholder for knowledge structure/details
   memory: null  # Placeholder for memory structure/details
