@@ -11,6 +11,8 @@ load_dotenv()  # loading and setting the api key can be done in one step
 
 
 class OpenAIAgent(BaseAgent):
+    _supports_actions = True
+
     def __init__(self, chat_history=None):
         self.last_message = ""
         self._chat_history = chat_history

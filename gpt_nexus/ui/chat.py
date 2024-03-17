@@ -98,6 +98,7 @@ def chat_page(username):
                         # label_visibility="collapsed",
                         help="Choose an agent to chat with.",
                     )
+                    chat_agent = chat.get_agent(selected_agent)
 
                     profiles = chat.get_profile_names()
                     selected_profile = st.selectbox(
@@ -109,20 +110,20 @@ def chat_page(username):
                         format_func=format_agent_profile,
                     )
 
-                    action_names = chat.get_action_names()
-                    selected_action_names = st.multiselect(
-                        "Select actions:",
-                        action_names,
-                        key="actions",
-                        # label_visibility="collapsed",
-                        help="Choose the actions the agent can use.",
-                    )
-                    selected_actions = chat.get_actions(selected_action_names)
+                    if chat_agent.supports_actions:
+                        action_names = chat.get_action_names()
+                        selected_action_names = st.multiselect(
+                            "Select actions:",
+                            action_names,
+                            key="actions",
+                            # label_visibility="collapsed",
+                            help="Choose the actions the agent can use.",
+                        )
+                        selected_actions = chat.get_actions(selected_action_names)
+                        chat_agent.actions = selected_actions
 
-                chat_agent = chat.get_agent(selected_agent)
                 chat_agent.profile = chat.get_profile(selected_profile)
                 chat_agent.chat_history = messages
-                chat_agent.actions = selected_actions
                 chat_avatar = chat_agent.profile.avatar
 
                 if user_input:

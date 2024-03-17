@@ -3,6 +3,10 @@ import os
 
 
 class BaseAgent:
+    _supports_actions = False
+    _supports_memory = False
+    _supports_knowledge = False
+
     def __init__(self, chat_history=None):
         self._chat_history = chat_history or []
         self.last_message = ""
@@ -69,6 +73,30 @@ class BaseAgent:
     @profile.setter
     def profile(self, profile):
         self._profile = profile
+
+    @classmethod
+    def get_supports_actions(cls):
+        return cls._supports_actions
+
+    @property
+    def supports_actions(self):
+        return self.get_supports_actions()
+
+    @classmethod
+    def get_supports_memory(cls):
+        return cls._supports_memory
+
+    @property
+    def supports_memory(self):
+        return self.get_supports_memory()
+
+    @classmethod
+    def get_supports_knowledge(cls):
+        return cls._supports_knowledge
+
+    @property
+    def supports_knowledge(self):
+        return self.get_supports_knowledge()
 
 
 class AgentManager:
