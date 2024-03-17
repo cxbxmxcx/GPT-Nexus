@@ -9,18 +9,20 @@ class AgentProfile:
         name,
         avatar,
         persona,
-        preferred_functions,
+        actions,
         knowledge,
         memory,
+        evaluators,
         planners,
         feedback,
     ):
         self.name = name
-        self.avatar = None
+        self.avatar = avatar
         self.persona = persona
-        self.preferred_functions = preferred_functions
+        self.actions = actions
         self.knowledge = knowledge
         self.memory = memory
+        self.evalutors = evaluators
         self.planners = planners
         self.feedback = feedback
 
@@ -36,7 +38,7 @@ class ProfileManager:
         for filename in os.listdir(self.directory):
             if filename.endswith(".yaml") or filename.endswith(".yml"):
                 file_path = os.path.join(self.directory, filename)
-                with open(file_path, "r") as file:
+                with open(file_path, "r", encoding="utf-8") as file:
                     profile_data = yaml.safe_load(file)
                     self.create_agent_profile(profile_data)
 
@@ -47,9 +49,10 @@ class ProfileManager:
                 name=profile.get("name", ""),
                 avatar=profile.get("avatar", ""),
                 persona=profile.get("persona", ""),
-                preferred_functions=profile.get("preferredFunctions", []),
+                actions=profile.get("actions", []),
                 knowledge=profile.get("knowledge", None),
                 memory=profile.get("memory", None),
+                evaluators=profile.get("evaluators", None),
                 planners=profile.get("planners", None),
                 feedback=profile.get("feedback", None),
             )

@@ -84,6 +84,10 @@ def chat_page(username):
                         "Type your message here:", key="msg_input"
                     )
 
+                def format_agent_profile(agent_name):
+                    profile = chat.get_profile(agent_name)
+                    return f"{profile.avatar} : {profile.name}"
+
                 with col_agent:
                     st.title("Agent Settings")
                     agents = chat.get_agent_names()
@@ -102,6 +106,7 @@ def chat_page(username):
                         key="profiles",
                         # label_visibility="collapsed",
                         help="Choose a profile for your agent.",
+                        format_func=format_agent_profile,
                     )
 
                     action_names = chat.get_action_names()
@@ -118,7 +123,7 @@ def chat_page(username):
                 chat_agent.profile = chat.get_profile(selected_profile)
                 chat_agent.chat_history = messages
                 chat_agent.actions = selected_actions
-                chat_avatar = chat.get_participant(selected_agent).avatar
+                chat_avatar = chat_agent.profile.avatar
 
                 if user_input:
                     with placeholder.container():

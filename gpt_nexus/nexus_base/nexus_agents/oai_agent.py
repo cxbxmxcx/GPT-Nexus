@@ -42,24 +42,6 @@ class OpenAIAgent(BaseAgent):
         )
         return str(response.choices[0].message.content)
 
-    def get_response_stream_old(self, user_input, thread_id=None):
-        self.last_message = ""
-        self.messages += [{"role": "user", "content": user_input}]
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=self.messages,
-            temperature=0.7,
-        )
-        self.last_message = str(response.choices[0].message.content)
-
-        def generate_responses():
-            response = self.last_message
-            for character in response:
-                time.sleep(0.01)
-                yield character
-
-        return generate_responses
-
     def get_response_stream(self, user_input, thread_id=None):
         self.last_message = ""
         self.messages += [{"role": "user", "content": user_input}]
