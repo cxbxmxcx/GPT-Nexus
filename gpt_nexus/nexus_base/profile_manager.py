@@ -17,7 +17,7 @@ class AgentProfile:
         feedback,
     ):
         self.name = name
-        self.avatar = None
+        self.avatar = avatar
         self.persona = persona
         self.actions = actions
         self.knowledge = knowledge
@@ -38,7 +38,7 @@ class ProfileManager:
         for filename in os.listdir(self.directory):
             if filename.endswith(".yaml") or filename.endswith(".yml"):
                 file_path = os.path.join(self.directory, filename)
-                with open(file_path, "r") as file:
+                with open(file_path, "r", encoding="utf-8") as file:
                     profile_data = yaml.safe_load(file)
                     self.create_agent_profile(profile_data)
 
