@@ -4,6 +4,8 @@ import streamlit as st
 from nexus_base.chat_system import ChatSystem
 from streamlit_js_eval import set_cookie
 
+from gpt_nexus.ui.options import create_options_ui
+
 
 def chat_page(username):
     chat = ChatSystem()
@@ -99,6 +101,10 @@ def chat_page(username):
                         help="Choose an agent to chat with.",
                     )
                     chat_agent = chat.get_agent(selected_agent)
+                    with st.expander("Agent Options:", expanded=False):
+                        options = chat_agent.get_attribute_options()
+                        if options:
+                            selected_options = create_options_ui(options)
 
                     profiles = chat.get_profile_names()
                     selected_profile = st.selectbox(

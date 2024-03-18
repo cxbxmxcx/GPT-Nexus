@@ -14,20 +14,59 @@ class OpenAIAgent(BaseAgent):
     _supports_actions = True
 
     def __init__(self, chat_history=None):
+        super().__init__(chat_history)
         self.last_message = ""
         self._chat_history = chat_history
         self.client = OpenAI()
+        self.client.models.list()
         self.model = "gpt-4-1106-preview"
+        self.max_tokens = 1024
         self.temperature = 0.7
         self.messages = []  # history of messages
         self.tools = []
+
+        self.add_attribute_options(
+            "model",
+            {
+                "type": "string",
+                "default": "gpt-4-1106-preview",
+                "options": [
+                    "gpt-4-1106-preview",
+                    "gpt-3.5-turbo-1106",
+                    "gpt-4-0613",
+                    "gpt-4",
+                    "gpt-4-0125-preview",
+                    "gpt-4-turbo-preview",
+                ],
+            },
+        )
+        self.add_attribute_options(
+            "temperature",
+            {
+                "type": "numeric",
+                "default": 0.7,
+                "min": 0.0,
+                "max": 1.0,
+                "step": 0.1,
+            },
+        )
+        self.add_attribute_options(
+            "max_tokens",
+            {
+                "type": "numeric",
+                "default": 1024,
+                "min": 100,
+                "max": 4096,
+                "step": 10,
+            },
+        )
 
     async def get_response(self, user_input, thread_id=None):
         self.messages += [{"role": "user", "content": user_input}]
         response = self.client.chat.completions.create(
             model=self.model,
             messages=self.messages,
-            temperature=0.7,
+            temperature=self.temperature,
         )
         self.last_message = str(response)
         return str(response)
@@ -51,6 +90,7 @@ class OpenAIAgent(BaseAgent):
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=self.messages,
+                temperature=self.temperature,
                 tools=self.tools,
                 tool_choice="auto",  # auto is default, but we'll be explicit
             )
@@ -58,6 +98,8 @@ class OpenAIAgent(BaseAgent):
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=self.messages,
+                temperature=self.temperature,
+                max_tokens=self.max_tokens,
             )
         response_message = response.choices[0].message
         tool_calls = response_message.tool_calls
@@ -91,6 +133,8 @@ class OpenAIAgent(BaseAgent):
             second_response = self.client.chat.completions.create(
                 model=self.model,
                 messages=self.messages,
+                temperature=self.temperature,
+                max_tokens=self.max_tokens,
             )  # get a new response from the model where it can see the function response
             response_message = second_response.choices[0].message
 

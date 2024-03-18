@@ -13,14 +13,49 @@ class AnthropicAgent(BaseAgent):
     )
 
     def __init__(self, chat_history=None):
+        super().__init__(chat_history)
         self.last_message = ""
         self._chat_history = chat_history
         self.client = Anthropic()
         self.model = "claude-3-opus-20240229"
+        self.max_tokens = 1024
         self.temperature = 0.7
         self.messages = []  # history of messages
         self.tools = []
         self.system = ""
+
+        self.add_attribute_options(
+            "model",
+            {
+                "type": "string",
+                "default": "claude-3-opus-20240229",
+                "options": [
+                    "claude-3-opus-20240229",
+                    "claude-3-sonnect-20240229",
+                    "claude-3-haiku-20240307",
+                ],
+            },
+        )
+        self.add_attribute_options(
+            "temperature",
+            {
+                "type": "numeric",
+                "default": 0.7,
+                "min": 0.0,
+                "max": 1.0,
+                "step": 0.1,
+            },
+        )
+        self.add_attribute_options(
+            "max_tokens",
+            {
+                "type": "numeric",
+                "default": 1024,
+                "min": 100,
+                "max": 4096,
+                "step": 10,
+            },
+        )
 
     async def get_response(self, user_input, thread_id=None):
         self.messages += [{"role": "user", "content": user_input}]
@@ -49,9 +84,10 @@ class AnthropicAgent(BaseAgent):
         self.messages += [{"role": "user", "content": user_input}]
 
         stream = self.client.messages.create(
-            max_tokens=1024,
+            max_tokens=self.max_tokens,
             messages=self.messages,
             model=self.model,
+            temperature=self.temperature,
             system=self.system,
             stream=True,
         )

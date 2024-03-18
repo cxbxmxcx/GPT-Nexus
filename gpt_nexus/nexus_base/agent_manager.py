@@ -12,6 +12,19 @@ class BaseAgent:
         self.last_message = ""
         self._actions = []
         self._profile = None
+        self.attribute_options = {}
+
+    def add_attribute_options(self, name, details):
+        """Add or update an attribute with its details."""
+        self.attribute_options[name] = details
+
+    def get_attribute_option(self, name):
+        """Get options or constraints for a given attribute."""
+        return self.attribute_options.get(name, None)
+
+    def get_attribute_options(self):
+        """Get all attribute options."""
+        return self.attribute_options
 
     async def get_response(self, user_input, thread_id=None):
         # Placeholder method to be implemented by subclasses
