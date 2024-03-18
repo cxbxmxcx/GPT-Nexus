@@ -1,8 +1,9 @@
 import time
 
 import streamlit as st
-from nexus_base.chat_system import ChatSystem
 from streamlit_js_eval import set_cookie
+
+from gpt_nexus.ui.cache import get_chat_system
 
 
 def get_cookie(name, default=None):
@@ -69,7 +70,7 @@ emoji_faces = [
 
 
 def login_page():
-    chat = ChatSystem()
+    chat = get_chat_system()
     if username := get_cookie("username", "username"):
         user = chat.get_participant(username)
         if user:
