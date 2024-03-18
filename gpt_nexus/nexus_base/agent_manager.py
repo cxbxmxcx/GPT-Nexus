@@ -130,17 +130,22 @@ class AgentManager:
         agents = []
         for filename in os.listdir(agent_directory):
             if filename.endswith(".py") and not filename.startswith("_"):
-                module_name = filename[:-3]
-                module_path = os.path.join(agent_directory, filename)
-                spec = importlib.util.spec_from_file_location(module_name, module_path)
-                module = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(module)
-                for attribute_name in dir(module):
-                    attribute = getattr(module, attribute_name)
-                    if (
-                        isinstance(attribute, type)
-                        and issubclass(attribute, BaseAgent)
-                        and attribute is not BaseAgent
-                    ):
-                        agents.append(attribute())
+                try:
+                    module_name = filename[:-3]
+                    module_path = os.path.join(agent_directory, filename)
+                    spec = importlib.util.spec_from_file_location(
+                        module_name, module_path
+                    )
+                    module = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(module)
+                    for attribute_name in dir(module):
+                        attribute = getattr(module, attribute_name)
+                        if (
+                            isinstance(attribute, type)
+                            and issubclass(attribute, BaseAgent)
+                            and attribute is not BaseAgent
+                        ):
+                            agents.append(attribute())
+                except Exception as e:
+                    print(f"Error loading agent from {filename}: {e}")
         return agents

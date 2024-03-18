@@ -105,6 +105,8 @@ def chat_page(username):
                         options = chat_agent.get_attribute_options()
                         if options:
                             selected_options = create_options_ui(options)
+                            for key, value in selected_options.items():
+                                setattr(chat_agent, key, value)
 
                     profiles = chat.get_profile_names()
                     selected_profile = st.selectbox(
