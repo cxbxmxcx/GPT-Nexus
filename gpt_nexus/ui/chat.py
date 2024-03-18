@@ -7,13 +7,19 @@ from streamlit_js_eval import set_cookie
 from gpt_nexus.ui.options import create_options_ui
 
 
+@st.cache_resource
+def get_chat_system():
+    return ChatSystem()
+
+
 def chat_page(username):
-    chat = ChatSystem()
+    st.set_page_config(layout="wide")
+
+    chat = get_chat_system()
     user = chat.get_participant(username)
     if user is None:
         st.error("Invalid user")
         st.stop()
-    st.set_page_config(layout="wide")
 
     # Initialize session state for threads and current_thread_id if not already present
     if "threads" not in st.session_state:
@@ -156,4 +162,5 @@ def chat_page(username):
                                 chat_agent.last_message,
                             )
 
+                    st.rerun()
                     st.rerun()
