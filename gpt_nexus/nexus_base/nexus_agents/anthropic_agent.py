@@ -1,3 +1,5 @@
+import os
+
 from anthropic import Anthropic
 from dotenv import load_dotenv
 
@@ -16,6 +18,9 @@ class AnthropicAgent(BaseAgent):
         super().__init__(chat_history)
         self.last_message = ""
         self._chat_history = chat_history
+        api_key = os.getenv("ANTHROPIC_API_KEY")
+        if not api_key:
+            raise ValueError("ANTHROPIC_API_KEY is not set.")
         self.client = Anthropic()
         self.model = "claude-3-opus-20240229"
         self.max_tokens = 1024
@@ -124,4 +129,5 @@ class AnthropicAgent(BaseAgent):
 
     def set_profile(self):
         if self._profile:
+            self.system = self._profile.persona
             self.system = self._profile.persona
