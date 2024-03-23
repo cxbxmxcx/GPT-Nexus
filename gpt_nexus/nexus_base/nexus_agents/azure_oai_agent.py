@@ -1,6 +1,5 @@
 import json
 import os
-import time
 
 from dotenv import load_dotenv
 from openai import AzureOpenAI
@@ -13,6 +12,7 @@ load_dotenv()  # loading and setting the api key can be done in one step
 
 class AzureOpenAIAgent(BaseAgent):
     _supports_actions = True
+    _supports_knowledge = True
 
     def __init__(self, chat_history=None):
         super().__init__(chat_history)
@@ -147,7 +147,6 @@ class AzureOpenAIAgent(BaseAgent):
         def generate_responses():
             response = self.last_message
             for character in response:
-                time.sleep(0.01)
                 yield character
 
         return generate_responses

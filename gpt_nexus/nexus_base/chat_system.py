@@ -6,6 +6,8 @@ from gpt_nexus.nexus_base.action_manager import ActionManager
 from gpt_nexus.nexus_base.agent_manager import AgentManager
 from gpt_nexus.nexus_base.chat_models import (
     ChatParticipants,
+    Document,
+    KnowledgeStore,
     Message,
     Notification,
     Subscriber,
@@ -13,6 +15,7 @@ from gpt_nexus.nexus_base.chat_models import (
     db,
 )
 from gpt_nexus.nexus_base.profile_manager import ProfileManager
+from gpt_nexus.nexus_base.retrieval_manager import RetrievalManager
 
 
 class ChatSystem:
@@ -25,6 +28,8 @@ class ChatSystem:
 
         self.profile_manager = ProfileManager()
         self.profiles = self.load_profiles()
+
+        self.retrieval_manager = RetrievalManager()
 
     def load_profiles(self):
         profiles = self.profile_manager.agent_profiles
@@ -223,3 +228,72 @@ class ChatSystem:
             print(f"{username} logged out successfully.")
         else:
             print("Username not found.")
+
+    def add_knowledge_store(self, store_name):
+        """Add a new knowledge store."""
+        with db.atomic():
+            KnowledgeStore.create(name=store_name)
+            return True
+
+    def delete_knowledge_store(self, store_name):
+        """Delete an existing knowledge store."""
+        self.retrieval_manager.delete_knowledge_store(store_name)
+        with db.atomic():
+            query = KnowledgeStore.delete().where(KnowledgeStore.name == store_name)
+            return query.execute()  # Returns the number of rows deleted
+
+    def add_document_to_store(self, store_name, document_name):
+        """Add a new document to a knowledge store."""
+        with db.atomic():
+            try:
+                store = KnowledgeStore.get(KnowledgeStore.name == store_name)
+                Document.create(store=store, name=document_name)
+                return True
+            except KnowledgeStore.DoesNotExist:
+                return False  # Store does not exist
+            # except IntegrityError:
+            #     return False  # Document with the same name already exists in the store
+
+    def delete_document_from_store(self, store_name, document_name):
+        """Delete a document from a knowledge store."""
+        with db.atomic():
+            try:
+                store = KnowledgeStore.get(KnowledgeStore.name == store_name)
+                query = Document.delete().where(
+                    (Document.store == store) & (Document.name == document_name)
+                )
+                return query.execute()  # Returns the number of rows deleted
+            except KnowledgeStore.DoesNotExist:
+                return False  # Store does not exist
+
+    def get_knowledge_store_names(self):
+        return [store.name for store in KnowledgeStore.select()]
+
+    def get_knowledge_store_documents(self, store_name):
+        try:
+            store = KnowledgeStore.get(KnowledgeStore.name == store_name)
+            return [doc.name for doc in store.documents]
+        except KnowledgeStore.DoesNotExist:
+            return []  # Store does not exist
+
+    def get_embedding(self, input_text, model="text-embedding-3-small"):
+        return self.retrieval_manager.get_embedding(input_text, model)
+
+    def query_documents(self, knowledge_store, query, n_results=5):
+        return self.retrieval_manager.query_documents(knowledge_store, query, n_results)
+
+    def get_documents(self, knowledge_store, include=["documents", "embeddings"]):
+        return self.retrieval_manager.get_documents(knowledge_store, include)
+
+    def load_document(self, knowledge_store, uploaded_file, splitter):
+        return self.retrieval_manager.load_document(
+            knowledge_store, uploaded_file, splitter
+        )
+
+    def examine_documents(self, knowledge_store):
+        return self.retrieval_manager.examine_documents(knowledge_store)
+
+    def apply_knowledge_RAG(self, knowledge_store, input_text, n_results=5):
+        return self.retrieval_manager.apply_knowledge_RAG(
+            knowledge_store, input_text, n_results
+        )

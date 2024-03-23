@@ -13,6 +13,7 @@ class AnthropicAgent(BaseAgent):
     _supports_actions = (
         False  # anthropic tool use is still in alpha, not going to touch it yet
     )
+    _supports_knowledge = True
 
     def __init__(self, chat_history=None):
         super().__init__(chat_history)

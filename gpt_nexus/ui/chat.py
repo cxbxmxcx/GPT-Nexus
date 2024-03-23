@@ -8,8 +8,6 @@ from gpt_nexus.ui.options import create_options_ui
 
 
 def chat_page(username):
-    st.set_page_config(layout="wide")
-
     chat = get_chat_system()
     user = chat.get_participant(username)
     if user is None:
@@ -73,7 +71,7 @@ def chat_page(username):
 
                 with col_chat:
                     st.title(current_thread.title)
-                    with st.container(height=500):
+                    with st.container(height=800):
                         messages = chat.read_messages(current_thread.thread_id)
                         for message in messages:
                             with st.chat_message(
@@ -131,6 +129,17 @@ def chat_page(username):
                         selected_actions = chat.get_actions(selected_action_names)
                         chat_agent.actions = selected_actions
 
+                    if chat_agent.supports_knowledge:
+                        knowledge_stores = chat.get_knowledge_store_names()
+                        selected_knowledge_store = st.selectbox(
+                            "Select a knowledge store:",
+                            knowledge_stores,
+                            key="knowledge_store",
+                            # label_visibility="collapsed",
+                            help="Choose the knowledge store to use.",
+                        )
+                        chat_agent.knowledge_store = selected_knowledge_store
+
                 chat_agent.profile = chat.get_profile(selected_profile)
                 chat_agent.chat_history = messages
                 chat_avatar = chat_agent.profile.avatar
@@ -145,9 +154,12 @@ def chat_page(username):
 
                         with st.chat_message(chat_agent.name, avatar=chat_avatar):
                             with st.spinner(text="The agent is thinking..."):
+                                rag = chat.apply_knowledge_RAG(
+                                    selected_knowledge_store, user_input
+                                )
                                 st.write_stream(
                                     chat_agent.get_response_stream(
-                                        user_input, current_thread.id
+                                        rag, current_thread.id
                                     )
                                 )
                             chat.post_message(
@@ -157,5 +169,4 @@ def chat_page(username):
                                 chat_agent.last_message,
                             )
 
-                    st.rerun()
                     st.rerun()

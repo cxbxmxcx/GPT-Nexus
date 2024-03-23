@@ -1,12 +1,11 @@
 import streamlit as st
 
-# Initialize an empty list or load existing agents from a file/database
-agents_list = ["Agent 1", "Agent 2"]  # This should be dynamically loaded
+from gpt_nexus.ui.cache import get_chat_system
 
 
 def save_new_agent(name, agent_type):
     # Placeholder function to save the new agent to a list, file, or database
-    agents_list.append(name)
+    agents.append(name)
     # Here, you would add code to save the new agent to your preferred storage
 
 
@@ -23,13 +22,20 @@ def save_agent_configuration(agent_name, configuration):
 
 
 def agent_page(username):
+    chat = get_chat_system()
+    user = chat.get_participant(username)
+    if user is None:
+        st.error("Invalid user")
+        st.stop()
+
     # Title of the main page
     st.title("Agent Configuration Page")
 
+    agents = chat.get_agent_names()
     # Sidebar for navigation
     with st.sidebar:
         add_agent = st.button("Add New Agent")
-        selected_agent = st.selectbox("Select Agent", agents_list)
+        selected_agent = st.selectbox("Select Agent", agents)
 
     if add_agent:
         with st.form("new_agent_form", clear_on_submit=True):

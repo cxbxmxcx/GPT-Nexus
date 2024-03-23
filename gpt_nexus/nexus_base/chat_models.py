@@ -86,10 +86,28 @@ class Notification(BaseModel):
     timestamp = DateTimeField(constraints=[SQL("DEFAULT CURRENT_TIMESTAMP")])
 
 
+class KnowledgeStore(BaseModel):
+    name = CharField(unique=True)
+
+
+class Document(BaseModel):
+    store = ForeignKeyField(KnowledgeStore, backref="documents")
+    name = CharField()
+
+
 def initialize_db():
     db.connect()
     db.create_tables(
-        [ChatParticipants, Thread, Message, Subscriber, Notification], safe=True
+        [
+            ChatParticipants,
+            Thread,
+            Message,
+            Subscriber,
+            Notification,
+            KnowledgeStore,
+            Document,
+        ],
+        safe=True,
     )
 
 
