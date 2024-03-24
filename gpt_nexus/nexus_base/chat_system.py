@@ -8,14 +8,17 @@ from gpt_nexus.nexus_base.chat_models import (
     ChatParticipants,
     Document,
     KnowledgeStore,
+    MemoryFunction,
+    MemoryStore,
     Message,
     Notification,
     Subscriber,
     Thread,
     db,
 )
+from gpt_nexus.nexus_base.knowledge_manager import KnowledgeManager
+from gpt_nexus.nexus_base.memory_manager import MemoryManager
 from gpt_nexus.nexus_base.profile_manager import ProfileManager
-from gpt_nexus.nexus_base.retrieval_manager import RetrievalManager
 
 
 class ChatSystem:
@@ -29,7 +32,8 @@ class ChatSystem:
         self.profile_manager = ProfileManager()
         self.profiles = self.load_profiles()
 
-        self.retrieval_manager = RetrievalManager()
+        self.knowledge_manager = KnowledgeManager()
+        self.memory_manager = MemoryManager()
 
     def load_profiles(self):
         profiles = self.profile_manager.agent_profiles
@@ -235,9 +239,32 @@ class ChatSystem:
             KnowledgeStore.create(name=store_name)
             return True
 
+    def get_knowledge_store(self, knowledge_store):
+        return (
+            KnowledgeStore.select()
+            .where(KnowledgeStore.name == knowledge_store)
+            .first()
+        )
+
+    def update_knowledge_store(self, knowledge_store):
+        with db.atomic():
+            knowledge_store.save()
+            return True
+
+    def update_knowledge_store_configuration(
+        self, selected_store, chunking_option, chunk_size, overlap
+    ):
+        with db.atomic():
+            knowledge_store = KnowledgeStore.get(KnowledgeStore.name == selected_store)
+            knowledge_store.chunking_option = chunking_option
+            knowledge_store.chunk_size = chunk_size
+            knowledge_store.overlap = overlap
+            knowledge_store.save()
+            return True
+
     def delete_knowledge_store(self, store_name):
         """Delete an existing knowledge store."""
-        self.retrieval_manager.delete_knowledge_store(store_name)
+        self.knowledge_manager.delete_knowledge_store(store_name)
         with db.atomic():
             query = KnowledgeStore.delete().where(KnowledgeStore.name == store_name)
             return query.execute()  # Returns the number of rows deleted
@@ -276,24 +303,84 @@ class ChatSystem:
         except KnowledgeStore.DoesNotExist:
             return []  # Store does not exist
 
-    def get_embedding(self, input_text, model="text-embedding-3-small"):
-        return self.retrieval_manager.get_embedding(input_text, model)
+    def get_document_embedding(self, input_text, model="text-embedding-3-small"):
+        return self.knowledge_manager.get_document_embedding(input_text, model)
 
     def query_documents(self, knowledge_store, query, n_results=5):
-        return self.retrieval_manager.query_documents(knowledge_store, query, n_results)
+        return self.knowledge_manager.query_documents(knowledge_store, query, n_results)
 
     def get_documents(self, knowledge_store, include=["documents", "embeddings"]):
-        return self.retrieval_manager.get_documents(knowledge_store, include)
+        return self.knowledge_manager.get_documents(knowledge_store, include)
 
-    def load_document(self, knowledge_store, uploaded_file, splitter):
-        return self.retrieval_manager.load_document(
-            knowledge_store, uploaded_file, splitter
-        )
+    def load_document(self, knowledge_store, uploaded_file):
+        knowledge_store = KnowledgeStore.get(KnowledgeStore.name == knowledge_store)
+        return self.knowledge_manager.load_document(knowledge_store, uploaded_file)
 
     def examine_documents(self, knowledge_store):
-        return self.retrieval_manager.examine_documents(knowledge_store)
+        return self.knowledge_manager.examine_documents(knowledge_store)
 
     def apply_knowledge_RAG(self, knowledge_store, input_text, n_results=5):
-        return self.retrieval_manager.apply_knowledge_RAG(
+        return self.knowledge_manager.apply_knowledge_RAG(
             knowledge_store, input_text, n_results
         )
+
+    def add_memory_store(self, store_name):
+        """Add a new memory store."""
+        with db.atomic():
+            MemoryStore.create(name=store_name)
+            return True
+
+    def get_memory_store_names(self):
+        return [store.name for store in MemoryStore.select()]
+
+    def get_memory_embedding(self, input_text, model="text-embedding-3-small"):
+        return self.memory_manager.get_memory_embedding(input_text, model)
+
+    def query_memories(self, memory_store, query, n_results=5):
+        return self.memory_manager.query_memories(memory_store, query, n_results)
+
+    def get_memories(self, memory_store, include=["documents", "embeddings"]):
+        return self.memory_manager.get_memories(memory_store, include)
+
+    def load_memory(self, memory_store, uploaded_file):
+        memory_store = MemoryStore.get(MemoryStore.name == memory_store)
+        return self.memory_manager.load_memory(memory_store, uploaded_file)
+
+    def examine_memories(self, memory_store):
+        return self.memory_manager.examine_memories(memory_store)
+
+    def apply_memory_RAG(self, memory_store, input_text, n_results=5):
+        return self.memory_manager.apply_memory_RAG(memory_store, input_text, n_results)
+
+    def get_memory_store(self, memory_store):
+        return MemoryStore.select().where(MemoryStore.name == memory_store).first()
+
+    def update_memory_store(self, memory_store):
+        with db.atomic():
+            memory_store.save()
+            return True
+
+    def update_memory_store_configuration(
+        self, selected_store, chunking_option, chunk_size, overlap
+    ):
+        with db.atomic():
+            memory_store = MemoryStore.get(MemoryStore.name == selected_store)
+            memory_store.chunking_option = chunking_option
+            memory_store.chunk_size = chunk_size
+            memory_store.overlap = overlap
+            memory_store.save()
+            return True
+
+    def append_memory(self, memory_store, user_input, llm_response, agent):
+        if memory_store is None or user_input is None or llm_response is None:
+            return None
+        memory_store = MemoryStore.get(MemoryStore.name == memory_store)
+        memory_function = self.get_memory_function(memory_store.memory_type)
+        return self.memory_manager.append_memory(
+            memory_store, user_input, llm_response, memory_function, agent
+        )
+
+    def get_memory_function(self, memory_type):
+        return MemoryFunction.get(
+            MemoryFunction.memory_type == memory_type
+        ).function_prompt

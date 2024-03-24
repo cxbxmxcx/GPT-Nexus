@@ -14,6 +14,7 @@ class AnthropicAgent(BaseAgent):
         False  # anthropic tool use is still in alpha, not going to touch it yet
     )
     _supports_knowledge = True
+    _supports_memory = True
 
     def __init__(self, chat_history=None):
         super().__init__(chat_history)

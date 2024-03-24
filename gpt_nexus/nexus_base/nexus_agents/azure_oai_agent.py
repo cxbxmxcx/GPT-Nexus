@@ -13,6 +13,7 @@ load_dotenv()  # loading and setting the api key can be done in one step
 class AzureOpenAIAgent(BaseAgent):
     _supports_actions = True
     _supports_knowledge = True
+    _supports_memory = True
 
     def __init__(self, chat_history=None):
         super().__init__(chat_history)

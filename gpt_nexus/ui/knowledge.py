@@ -1,9 +1,5 @@
 import plotly.graph_objects as go
 import streamlit as st
-from langchain.text_splitter import (
-    CharacterTextSplitter,
-    RecursiveCharacterTextSplitter,
-)
 from sklearn.decomposition import PCA
 
 from gpt_nexus.ui.cache import get_chat_system
@@ -13,12 +9,16 @@ def view_embeddings(chat, knowledge_store):
     """
     Displays all documents and their embeddings from ChromaDB.
     """
+    if knowledge_store is None:
+        st.error("Please create a knowledge store first.")
+        st.stop()
+
     documents = chat.get_documents(knowledge_store, include=["documents", "embeddings"])
 
     embeddings = documents["embeddings"]
     documents = documents["documents"]
 
-    if embeddings and documents:
+    if embeddings and documents and len(embeddings) > 3:
         # Applying PCA to reduce dimensions to 3
         pca = PCA(n_components=3)
         reduced_embeddings = pca.fit_transform(embeddings)
@@ -58,42 +58,31 @@ def view_embeddings(chat, knowledge_store):
             ),
         )
         st.plotly_chart(fig)
+    else:
+        st.error("Not enough documents available to display.")
 
 
 def add_document_to_store(chat, knowledge_store):
+    if knowledge_store is None:
+        st.error("Please create a knowledge store first.")
+        st.stop()
+
     document_file = st.file_uploader(
         "Choose a file to upload as a new document:",
-        type=["txt", "pdf", "docx"],
+        type=["txt", "md", "html", "csv", "py", "json", "pdf", "docx"],
         key="upload_doc",
     )
 
-    if document_file is not None and knowledge_store:
+    if document_file is not None:
         # Assuming text files for simplicity, but you may need to handle different file types differently
         document_name = document_file.name
 
-        chunking_option = st.selectbox("Chunking Option", ["Character", "Recursive"])
-        chunk_size = st.number_input("Chunk Size", min_value=1)
-        overlap = st.number_input("Overlap", min_value=0)
-
-        if st.button("Add Document"):
-            if chunking_option == "Character":
-                splitter = CharacterTextSplitter(
-                    chunk_size=chunk_size, chunk_overlap=overlap, separator="\n"
-                )
-            elif chunking_option == "Recursive":
-                splitter = RecursiveCharacterTextSplitter(
-                    chunk_size=chunk_size,
-                    chunk_overlap=overlap,
-                    length_function=len,
-                    is_separator_regex=False,
-                )
-
-            chat.load_document(knowledge_store, document_file, splitter)
-            st.success("Document uploaded and processed successfully!")
-            chat.add_document_to_store(knowledge_store, document_name)
-            st.success(
-                f"Document '{document_name}' added to Knowledge Store '{knowledge_store}'!"
-            )
+        chat.load_document(knowledge_store, document_file)
+        st.success("Document uploaded and processed successfully!")
+        chat.add_document_to_store(knowledge_store, document_name)
+        st.success(
+            f"Document '{document_name}' added to Knowledge Store '{knowledge_store}'!"
+        )
 
 
 def knowledge_page(username):
@@ -108,7 +97,15 @@ def knowledge_page(username):
 
     with st.sidebar.expander("Manage Knowledge Stores"):
         store_name = st.text_input("Enter a new knowledge store name to create:")
-        if st.button("Create Knowledge Store"):
+        if st.button(
+            "Create Knowledge Store",
+            disabled=(
+                store_name == ""
+                or store_name in chat.get_knowledge_store_names()
+                or store_name is None
+                or len(store_name) < 3
+            ),
+        ):
             chat.add_knowledge_store(store_name)
             st.success(f"Knowledge Store '{store_name}' created!")
 
@@ -161,3 +158,20 @@ def knowledge_page(username):
 
     with config_tabs[4]:
         st.subheader("Knowledge Store Configuration")
+        knowledge_store = chat.get_knowledge_store(selected_store)
+
+        options = ["Character", "Recursive"]
+        knowledge_store.chunking_option = st.selectbox(
+            "Chunking Option",
+            options,
+            index=options.index(knowledge_store.chunking_option),
+        )
+        knowledge_store.chunk_size = st.number_input(
+            "Chunk Size", min_value=1, value=knowledge_store.chunk_size
+        )
+        knowledge_store.overlap = st.number_input(
+            "Overlap", min_value=0, value=knowledge_store.overlap
+        )
+
+        if st.button("Save Configuration"):
+            chat.update_knowledge_store(knowledge_store)

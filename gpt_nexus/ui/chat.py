@@ -133,12 +133,23 @@ def chat_page(username):
                         knowledge_stores = chat.get_knowledge_store_names()
                         selected_knowledge_store = st.selectbox(
                             "Select a knowledge store:",
-                            knowledge_stores,
+                            ["None"] + knowledge_stores,
                             key="knowledge_store",
                             # label_visibility="collapsed",
                             help="Choose the knowledge store to use.",
                         )
                         chat_agent.knowledge_store = selected_knowledge_store
+
+                    if chat_agent.supports_memory:
+                        memory_stores = chat.get_memory_store_names()
+                        selected_memory_store = st.selectbox(
+                            "Select a memory store:",
+                            ["None"] + memory_stores,
+                            key="memory_store",
+                            # label_visibility="collapsed",
+                            help="Choose the memory store to use.",
+                        )
+                        chat_agent.memory_store = selected_memory_store
 
                 chat_agent.profile = chat.get_profile(selected_profile)
                 chat_agent.chat_history = messages
@@ -154,14 +165,24 @@ def chat_page(username):
 
                         with st.chat_message(chat_agent.name, avatar=chat_avatar):
                             with st.spinner(text="The agent is thinking..."):
-                                rag = chat.apply_knowledge_RAG(
+                                knowledge_rag = chat.apply_knowledge_RAG(
                                     selected_knowledge_store, user_input
                                 )
+                                memory_rag = chat.apply_memory_RAG(
+                                    selected_memory_store, user_input
+                                )
+                                content = user_input + knowledge_rag + memory_rag
                                 st.write_stream(
                                     chat_agent.get_response_stream(
-                                        rag, current_thread.id
+                                        content, current_thread.id
                                     )
                                 )
+                            chat.append_memory(
+                                selected_memory_store,
+                                user_input,
+                                chat_agent.last_message,
+                                chat_agent,
+                            )
                             chat.post_message(
                                 current_thread.thread_id,
                                 chat_agent.name,

@@ -1,4 +1,6 @@
 import asyncio
+import base64
+import hashlib
 import threading
 from queue import Queue
 
@@ -38,3 +40,17 @@ def async_to_sync_generator(async_gen):
 # async_gen = async_gen_function()  # Replace with your actual async generator
 # for item in async_to_sync_generator(async_gen):
 #     print(item)
+
+
+def id_hash(input_string, length=10):
+    # Hash the input string using SHA-256
+    hash_obj = hashlib.sha256(input_string.encode("utf-8"))
+    hash_digest = hash_obj.digest()
+
+    # Encode the hash using base64
+    base64_encoded = base64.urlsafe_b64encode(hash_digest).decode("utf-8")
+
+    # Truncate or adjust the encoded string to the desired length
+    short_hash = base64_encoded[:length]
+
+    return short_hash
