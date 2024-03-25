@@ -146,23 +146,23 @@ def initialize_db():
     # Add some initial data
     MemoryFunction.create(
         memory_type=MemoryType.CONVERSATIONAL.value,
-        function_prompt="Summarize the conversation and create a set of statements that summarize the conversation. Return a JSON object with the following keys: 'summary'. Each key should have a list of statements that are relevant to that category.",
+        function_prompt="Summarize the conversation and create a set of statements that summarize the conversation. Return a JSON object with the following keys: 'summary'. Each key should have a list of statements that are relevant to that category. Return only the JSON object and nothing else.",
         function_keys="summary",
     )
     MemoryFunction.create(
         memory_type=MemoryType.SEMANTIC.value,
-        function_prompt="Summarize the facts and preferences in the conversation. Return a JSON object with the following keys: 'questions', 'facts', 'preferences'. Each key should have a list of statements that are relevant to that category.",
-        function_keys="questions, facts, preferences",
+        function_prompt="Summarize the facts and preferences in the conversation. Return a JSON object with the following keys: 'questions', 'facts', 'preferences'. Each key should have a list of statements that are relevant to that category. Return only the JSON object and nothing else.",
+        function_keys="questions,facts,preferences",
     )
     MemoryFunction.create(
         memory_type=MemoryType.PROCEDURAL.value,
-        function_prompt="Summarize all the tasks, steps and procedures that are identified in the conversation. Return a JSON object with the following keys: 'tasks', 'steps', 'procedures'. Each key should have a list of statements that are relevant to that category.",
-        function_keys="tasks, steps, procedures",
+        function_prompt="Summarize all the tasks, steps and procedures that are identified in the conversation. Return a JSON object with the following keys: 'tasks', 'steps', 'procedures'. Each key should have a list of statements that are relevant to that category. Return only the JSON object and nothing else.",
+        function_keys="tasks,steps,procedures",
     )
     MemoryFunction.create(
         memory_type=MemoryType.EPISODIC.value,
-        function_prompt="Extract all the events and episodes that are identified in the conversation. Return a JSON object with the following keys: 'events', 'episodes'. Each key should have a list of statements that are relevant to that category.",
-        function_keys="events, episodes",
+        function_prompt="Extract all the events and episodes that are identified in the conversation. Return a JSON object with the following keys: 'events', 'episodes'. Each key should have a list of statements that are relevant to that category. Return only the JSON object and nothing else.",
+        function_keys="events,episodes",
     )
 
 

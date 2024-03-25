@@ -185,7 +185,8 @@ def memory_page(username):
         )
 
         memory_function = chat.get_memory_function(memory_store.memory_type)
-        st.write(f"Memory Function: {memory_function}")
+        st.write(f"Memory Function: {memory_function.function_prompt}")
 
         if st.button("Save Configuration"):
             chat.update_memory_store(memory_store)
+            st.success("Configuration saved successfully!")
