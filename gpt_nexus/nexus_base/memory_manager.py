@@ -1,3 +1,5 @@
+import json
+
 import chromadb
 import pandas as pd
 from dotenv import load_dotenv
@@ -7,7 +9,11 @@ from langchain_text_splitters import (
 )
 from openai import OpenAI
 
-from gpt_nexus.nexus_base.utils import id_hash
+from gpt_nexus.nexus_base.utils import (
+    convert_keys_to_lowercase,
+    extract_code,
+    id_hash,
+)
 
 load_dotenv()
 
@@ -77,35 +83,35 @@ class MemoryManager:
                 is_separator_regex=False,
             )
 
-    def load_memory(self, memory_store, memory):
-        """
-        Loads a document from upload, splits it based on chunking option and saves embeddings.
+    # def load_memory(self, memory_store, memory):
+    #     """
+    #     Loads a document from upload, splits it based on chunking option and saves embeddings.
 
-        Args:
-            uploaded_file: A Streamlit file uploader object.
-            chunker: A Langchain TextSplitter object (CharacterTextSplitter or WordTextSplitter).
-            chunk_size: The size of each chunk.
-            overlap: The size of the overlap between chunks.
+    #     Args:
+    #         uploaded_file: A Streamlit file uploader object.
+    #         chunker: A Langchain TextSplitter object (CharacterTextSplitter or WordTextSplitter).
+    #         chunk_size: The size of each chunk.
+    #         overlap: The size of the overlap between chunks.
 
-        Returns:
-            None
-        """
-        if memory_store is not None and memory is not None and len(memory) > 0:
-            splitter = self.get_splitter(memory_store)
-            docs = splitter.create_documents([memory])
+    #     Returns:
+    #         None
+    #     """
+    #     if memory_store is not None and memory is not None and len(memory) > 0:
+    #         splitter = self.get_splitter(memory_store)
+    #         docs = splitter.create_documents([memory])
 
-            embeddings = [self.get_memory_embedding(doc) for doc in docs]
+    #         embeddings = [self.get_memory_embedding(doc) for doc in docs]
 
-            # create chroma database client
-            chroma_client = chromadb.PersistentClient(path=self.CHROMA_DB)
-            # get or create a collection
-            collection = chroma_client.get_or_create_collection(name=memory_store.name)
-            docs = [str(doc.page_content) for doc in docs]
-            ids = [id_hash(m) for m in docs]
+    #         # create chroma database client
+    #         chroma_client = chromadb.PersistentClient(path=self.CHROMA_DB)
+    #         # get or create a collection
+    #         collection = chroma_client.get_or_create_collection(name=memory_store.name)
+    #         docs = [str(doc.page_content) for doc in docs]
+    #         ids = [id_hash(m) for m in docs]
 
-            collection.add(embeddings=embeddings, documents=docs, ids=ids)
-            return True
-        return False
+    #         collection.add(embeddings=embeddings, documents=docs, ids=ids)
+    #         return True
+    #     return False
 
     def examine_memories(self, memory_store):
         """
@@ -132,26 +138,45 @@ class MemoryManager:
     def append_memory(
         self, memory_store, user_input, llm_response, memory_function=None, agent=None
     ):
-        if memory_store is None or user_input is None or llm_response is None:
+        if (
+            memory_store is None
+            or user_input is None
+            or agent is None
+            or memory_function is None
+        ):
             return False
 
         chroma_client = chromadb.PersistentClient(path=self.CHROMA_DB)
         collection = chroma_client.get_or_create_collection(name=memory_store.name)
 
-        memory = f"""
-        user:
-        {user_input}
-        assistant:
-        {llm_response}
-        """
-
-        if memory_function is not None and agent is not None:
-            memories = agent.get_semantic_response(memory_function, memory).split(",")
+        if llm_response is None:
+            memory = f"""            
+            {user_input}
+            """
         else:
-            memories = [memory]
+            memory = f"""
+            user:
+            {user_input}
+            assistant:
+            {llm_response}
+            """
 
-        embeddings = [self.get_memory_embedding(m) for m in memories]
-        ids = [id_hash(m) for m in memory]
+        memories = agent.get_semantic_response(memory_function.function_prompt, memory)
+        memories, code = extract_code(memories)
+        if code:
+            memories = code[0][1]
+        memories = json.loads(memories)
+        memories = convert_keys_to_lowercase(memories)
+        memories = sum(
+            [memories[key.lower()] for key in memory_function.function_keys.split(",")],
+            [],
+        )
 
-        collection.add(embeddings=embeddings, documents=memories, ids=ids)
+        for memory in memories:
+            embedding = self.get_memory_embedding(memory)
+            id = id_hash(memory)
+            docs = collection.get(ids=[id], include=["documents"])["documents"]
+            if docs is None or len(docs) == 0:
+                collection.add(embeddings=[embedding], documents=[memory], ids=[id])
+
         return True

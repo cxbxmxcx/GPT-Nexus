@@ -110,6 +110,7 @@ class MemoryFunction(BaseModel):
         default=MemoryType.CONVERSATIONAL.value,
     )
     function_prompt = TextField()
+    function_keys = CharField()
 
 
 class MemoryStore(BaseModel):
@@ -118,10 +119,6 @@ class MemoryStore(BaseModel):
         choices=[(m.value, m.name) for m in MemoryType],
         default=MemoryType.CONVERSATIONAL.value,
     )
-
-    chunking_option = CharField(default="Character")
-    chunk_size = IntegerField(default=512)
-    overlap = IntegerField(default=128)
 
 
 class Document(BaseModel):
@@ -149,19 +146,23 @@ def initialize_db():
     # Add some initial data
     MemoryFunction.create(
         memory_type=MemoryType.CONVERSATIONAL.value,
-        function_prompt="Summarize the conversation into a comma seperated list of points.",
+        function_prompt="Summarize the conversation and create a set of statements that summarize the conversation. Return a JSON object with the following keys: 'summary'. Each key should have a list of statements that are relevant to that category.",
+        function_keys="summary",
     )
     MemoryFunction.create(
         memory_type=MemoryType.SEMANTIC.value,
-        function_prompt="You are preferences detector. You are able to extract a users perferences from a conversation history. Extract any new preferences in a comma seperated list of statements.",
+        function_prompt="Summarize the facts and preferences in the conversation. Return a JSON object with the following keys: 'questions', 'facts', 'preferences'. Each key should have a list of statements that are relevant to that category.",
+        function_keys="questions, facts, preferences",
     )
     MemoryFunction.create(
         memory_type=MemoryType.PROCEDURAL.value,
-        function_prompt="Summarize all the tasks, steps and procedures into a comma seperated list.",
+        function_prompt="Summarize all the tasks, steps and procedures that are identified in the conversation. Return a JSON object with the following keys: 'tasks', 'steps', 'procedures'. Each key should have a list of statements that are relevant to that category.",
+        function_keys="tasks, steps, procedures",
     )
     MemoryFunction.create(
         memory_type=MemoryType.EPISODIC.value,
-        function_prompt="Extract all the events and episodes from the conversation and output a comma seperated list.",
+        function_prompt="Extract all the events and episodes that are identified in the conversation. Return a JSON object with the following keys: 'events', 'episodes'. Each key should have a list of statements that are relevant to that category.",
+        function_keys="events, episodes",
     )
 
 

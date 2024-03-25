@@ -1,6 +1,7 @@
 import asyncio
 import base64
 import hashlib
+import re
 import threading
 from queue import Queue
 
@@ -54,3 +55,38 @@ def id_hash(input_string, length=10):
     short_hash = base64_encoded[:length]
 
     return short_hash
+
+
+def convert_keys_to_lowercase(obj):
+    if isinstance(obj, dict):
+        return {k.lower(): convert_keys_to_lowercase(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_keys_to_lowercase(element) for element in obj]
+    else:
+        return obj
+
+
+def extract_code(text: str):
+    """
+    Extracts code and its type from the provided text enclosed in triple backticks.
+
+    Args:
+    text (str): The input text containing code blocks enclosed in triple backticks.
+
+    Returns:
+    tuple: A tuple containing the cleaned text (without the code blocks), and a list of tuples,
+           each with the type of the code (e.g., python, json) and the code itself.
+           If no code blocks are found, returns the original text and None.
+    """
+    # Pattern to match code blocks including the type specifier
+    pattern = r"```(\w+)\n(.*?)```"
+    matches = re.findall(pattern, text, re.DOTALL)
+
+    if not matches:
+        return text, None
+
+    # Extract and return the code blocks along with their types
+    code_blocks = [(match[0], match[1].strip()) for match in matches]
+    cleaned_text = re.sub(pattern, "", text, flags=re.DOTALL).strip()
+
+    return cleaned_text, code_blocks

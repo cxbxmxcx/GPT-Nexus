@@ -342,9 +342,14 @@ class ChatSystem:
     def get_memories(self, memory_store, include=["documents", "embeddings"]):
         return self.memory_manager.get_memories(memory_store, include)
 
-    def load_memory(self, memory_store, uploaded_file):
+    def load_memory(self, memory_store, memory, agent):
+        if memory_store is None or memory is None:
+            return None
         memory_store = MemoryStore.get(MemoryStore.name == memory_store)
-        return self.memory_manager.load_memory(memory_store, uploaded_file)
+        memory_function = self.get_memory_function(memory_store.memory_type)
+        return self.memory_manager.append_memory(
+            memory_store, memory, None, memory_function, agent
+        )
 
     def examine_memories(self, memory_store):
         return self.memory_manager.examine_memories(memory_store)
@@ -372,7 +377,7 @@ class ChatSystem:
             return True
 
     def append_memory(self, memory_store, user_input, llm_response, agent):
-        if memory_store is None or user_input is None or llm_response is None:
+        if memory_store is None or user_input is None:
             return None
         memory_store = MemoryStore.get(MemoryStore.name == memory_store)
         memory_function = self.get_memory_function(memory_store.memory_type)
@@ -381,6 +386,4 @@ class ChatSystem:
         )
 
     def get_memory_function(self, memory_type):
-        return MemoryFunction.get(
-            MemoryFunction.memory_type == memory_type
-        ).function_prompt
+        return MemoryFunction.get(MemoryFunction.memory_type == memory_type)

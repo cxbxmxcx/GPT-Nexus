@@ -4,6 +4,7 @@ from sklearn.decomposition import PCA
 
 from gpt_nexus.nexus_base.chat_models import MemoryType
 from gpt_nexus.ui.cache import get_chat_system
+from gpt_nexus.ui.options import create_options_ui
 
 
 def view_embeddings(chat, memory_store):
@@ -68,10 +69,30 @@ def add_memory_to_store(chat, memory_store):
         st.error("Please create a memory store first.")
         st.stop()
 
+    st.title("Agent Settings")
+    agents = chat.get_agent_names()
+
+    agents = [agent for agent in agents if chat.get_agent(agent).supports_memory]
+
+    selected_agent = st.selectbox(
+        "Choose an agent engine:",
+        agents,
+        key="agents",
+        # label_visibility="collapsed",
+        help="Choose an agent to chat with.",
+    )
+    chat_agent = chat.get_agent(selected_agent)
+    with st.expander("Agent Options:", expanded=False):
+        options = chat_agent.get_attribute_options()
+        if options:
+            selected_options = create_options_ui(options)
+            for key, value in selected_options.items():
+                setattr(chat_agent, key, value)
+
     memory = st.text_area("Enter a memory to add to the store:")
 
     if st.button("Add Memory") and memory != "" and memory is not None:
-        chat.load_memory(memory_store, memory)
+        chat.load_memory(memory_store, memory, chat_agent)
         st.success("Memory added successfully!")
 
 
@@ -163,17 +184,6 @@ def memory_page(username):
             index=memory_types.index(memory_store.memory_type),
         )
 
-        memory_store.chunking_option = st.selectbox(
-            "Chunking Option",
-            ["Character", "Recursive"],
-            index=["Character", "Recursive"].index(memory_store.chunking_option),
-        )
-        memory_store.chunk_size = st.number_input(
-            "Chunk Size", min_value=1, value=memory_store.chunk_size
-        )
-        memory_store.overlap = st.number_input(
-            "Overlap", min_value=0, value=memory_store.overlap
-        )
         memory_function = chat.get_memory_function(memory_store.memory_type)
         st.write(f"Memory Function: {memory_function}")
 

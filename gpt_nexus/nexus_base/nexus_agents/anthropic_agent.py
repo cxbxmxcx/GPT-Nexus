@@ -14,7 +14,7 @@ class AnthropicAgent(BaseAgent):
         False  # anthropic tool use is still in alpha, not going to touch it yet
     )
     _supports_knowledge = True
-    _supports_memory = True
+    _supports_memory = False  # needs to update support for json parsing
 
     def __init__(self, chat_history=None):
         super().__init__(chat_history)
@@ -76,15 +76,16 @@ class AnthropicAgent(BaseAgent):
 
     def get_semantic_response(self, system, user):
         messages = [
-            {"role": "system", "content": system},
             {"role": "user", "content": user},
         ]
-        response = self.client.chat.completions.create(
-            model=self.model,
+        response = self.client.messages.create(
+            max_tokens=self.max_tokens,
             messages=messages,
+            model=self.model,
             temperature=self.temperature,
+            system=system,
         )
-        return str(response.choices[0].message.content)
+        return str(response.content[0].text)
 
     def get_response_stream(self, user_input, thread_id=None):
         self.last_message = ""

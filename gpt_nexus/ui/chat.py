@@ -177,12 +177,13 @@ def chat_page(username):
                                         content, current_thread.id
                                     )
                                 )
-                            chat.append_memory(
-                                selected_memory_store,
-                                user_input,
-                                chat_agent.last_message,
-                                chat_agent,
-                            )
+                            if selected_memory_store != "None":
+                                chat.append_memory(
+                                    selected_memory_store,
+                                    user_input,
+                                    chat_agent.last_message,
+                                    chat_agent,
+                                )
                             chat.post_message(
                                 current_thread.thread_id,
                                 chat_agent.name,
