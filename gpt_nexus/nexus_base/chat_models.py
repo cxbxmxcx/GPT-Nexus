@@ -110,6 +110,10 @@ class MemoryFunction(BaseModel):
         default=MemoryType.CONVERSATIONAL.value,
     )
     function_prompt = TextField()
+    function_keys = CharField()
+    augmentation_prompt = TextField(null=True)
+    augmentation_keys = CharField(null=True)
+    summarization_prompt = TextField(null=True)
 
 
 class MemoryStore(BaseModel):
@@ -118,10 +122,6 @@ class MemoryStore(BaseModel):
         choices=[(m.value, m.name) for m in MemoryType],
         default=MemoryType.CONVERSATIONAL.value,
     )
-
-    chunking_option = CharField(default="Character")
-    chunk_size = IntegerField(default=512)
-    overlap = IntegerField(default=128)
 
 
 class Document(BaseModel):
@@ -149,19 +149,33 @@ def initialize_db():
     # Add some initial data
     MemoryFunction.create(
         memory_type=MemoryType.CONVERSATIONAL.value,
-        function_prompt="Summarize the conversation into a comma seperated list of points.",
+        function_prompt="Summarize the conversation and create a set of statements that summarize the conversation. Return a JSON object with the following keys: 'summary'. Each key should have a list of statements that are relevant to that category. Return only the JSON object and nothing else.",
+        function_keys="summary",
+        summarization_prompt="Given a conversation transcript, synthesize the key points, themes, and takeaways into a concise summary. Focus on the main ideas, important details, and any conclusions or insights that emerged during the conversation. The summary should capture the essence of the discussion and provide a clear, coherent overview of the main topics covered. Avoid unnecessary repetition or irrelevant information, and aim to distill the conversation into a few key points that highlight the most important aspects of the interaction.",
     )
     MemoryFunction.create(
         memory_type=MemoryType.SEMANTIC.value,
-        function_prompt="You are preferences detector. You are able to extract a users perferences from a conversation history. Extract any new preferences in a comma seperated list of statements.",
+        function_prompt="Summarize the facts and preferences in the conversation. Return a JSON object with the following keys: 'questions', 'facts', 'preferences'. Each key should have a list of statements that are relevant to that category. Return only the JSON object and nothing else.",
+        function_keys="questions,facts,preferences",
+        augmentation_prompt="Generate a set of questions that can be asked based on the conversation. Return a JSON object with the following keys: 'questions'. Each key should have a list of questions that can be asked based on the conversation. Return only the JSON object and nothing else.",
+        augmentation_keys="questions",
+        summarization_prompt="Given a list of personal memories described below, synthesize these into a concise narrative that captures their essence, emotional significance, and any common themes. Focus on the underlying feelings, lessons learned, or how these memories collectively shape my understanding of a particular aspect of my life. Please merge similar memories and emphasize unique insights or moments of growth. The aim is to create a compact, meaningful representation of these experiences that reflects their impact on me rather than a detailed account of each memory",
     )
     MemoryFunction.create(
         memory_type=MemoryType.PROCEDURAL.value,
-        function_prompt="Summarize all the tasks, steps and procedures into a comma seperated list.",
+        function_prompt="Summarize all the tasks, steps and procedures that are identified in the conversation. Return a JSON object with the following keys: 'tasks', 'steps', 'procedures'. Each key should have a list of statements that are relevant to that category. Return only the JSON object and nothing else.",
+        function_keys="tasks,steps,procedures",
+        augmentation_prompt="Generate a set of tasks that need to be completed based on the conversation. Return a JSON object with the following keys: 'tasks'. Each key should have a list of tasks that need to be completed based on the conversation. Return only the JSON object and nothing else.",
+        augmentation_keys="tasks",
+        summarization_prompt="Given a list of tasks described below, synthesize these into a concise narrative that captures their essence, emotional significance, and any common themes. Focus on the underlying feelings, lessons learned, or how these tasks collectively shape my understanding of a particular aspect of the problem. Please merge similar tasks and emphasize unique insights or moments of growth. The aim is to create a compact, meaningful representation of these experiences that reflects their impact on the problem rather than a detailed account of each task",
     )
     MemoryFunction.create(
         memory_type=MemoryType.EPISODIC.value,
-        function_prompt="Extract all the events and episodes from the conversation and output a comma seperated list.",
+        function_prompt="Extract all the events and episodes that are identified in the conversation. Return a JSON object with the following keys: 'events', 'episodes'. Each key should have a list of statements that are relevant to that category. Return only the JSON object and nothing else.",
+        function_keys="events,episodes",
+        augmentation_prompt="Generate a set of events that have occurred based on the conversation. Return a JSON object with the following keys: 'events'. Each key should have a list of events that have occurred based on the conversation. Return only the JSON object and nothing else.",
+        augmentation_keys="events",
+        summarization_prompt="Given a list of events described below, synthesize these into a concise narrative that captures their essence, emotional significance, and any common themes. Focus on the underlying feelings, lessons learned, or how these events collectively shape my understanding of a particular aspect of a problem. Please merge similar events and emphasize unique insights or moments of growth. The aim is to create a compact, meaningful representation of these experiences that reflects their impact on me rather than a detailed account of each event",
     )
 
 

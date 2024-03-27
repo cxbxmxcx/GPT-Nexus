@@ -342,15 +342,26 @@ class ChatSystem:
     def get_memories(self, memory_store, include=["documents", "embeddings"]):
         return self.memory_manager.get_memories(memory_store, include)
 
-    def load_memory(self, memory_store, uploaded_file):
+    def load_memory(self, memory_store, memory, agent):
+        if memory_store is None or memory is None:
+            return None
         memory_store = MemoryStore.get(MemoryStore.name == memory_store)
-        return self.memory_manager.load_memory(memory_store, uploaded_file)
+        memory_function = self.get_memory_function(memory_store.memory_type)
+        return self.memory_manager.append_memory(
+            memory_store, memory, None, memory_function, agent
+        )
 
     def examine_memories(self, memory_store):
         return self.memory_manager.examine_memories(memory_store)
 
-    def apply_memory_RAG(self, memory_store, input_text, n_results=5):
-        return self.memory_manager.apply_memory_RAG(memory_store, input_text, n_results)
+    def apply_memory_RAG(self, memory_store, input_text, agent, n_results=5):
+        if memory_store is None or memory_store == "None" or input_text is None:
+            return ""
+        memory_store = MemoryStore.get(MemoryStore.name == memory_store)
+        memory_function = self.get_memory_function(memory_store.memory_type)
+        return self.memory_manager.apply_memory_RAG(
+            memory_store, memory_function, input_text, agent, n_results
+        )
 
     def get_memory_store(self, memory_store):
         return MemoryStore.select().where(MemoryStore.name == memory_store).first()
@@ -372,7 +383,7 @@ class ChatSystem:
             return True
 
     def append_memory(self, memory_store, user_input, llm_response, agent):
-        if memory_store is None or user_input is None or llm_response is None:
+        if memory_store is None or user_input is None:
             return None
         memory_store = MemoryStore.get(MemoryStore.name == memory_store)
         memory_function = self.get_memory_function(memory_store.memory_type)
@@ -381,6 +392,13 @@ class ChatSystem:
         )
 
     def get_memory_function(self, memory_type):
-        return MemoryFunction.get(
-            MemoryFunction.memory_type == memory_type
-        ).function_prompt
+        return MemoryFunction.get(MemoryFunction.memory_type == memory_type)
+
+    def compress_memories(self, memory_store, grouped_memories, chat_agent):
+        if memory_store is None or grouped_memories is None:
+            return None
+        memory_store = MemoryStore.get(MemoryStore.name == memory_store)
+        memory_function = self.get_memory_function(memory_store.memory_type)
+        return self.memory_manager.compress_memories(
+            memory_store, grouped_memories, memory_function, chat_agent
+        )

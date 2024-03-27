@@ -169,7 +169,7 @@ def chat_page(username):
                                     selected_knowledge_store, user_input
                                 )
                                 memory_rag = chat.apply_memory_RAG(
-                                    selected_memory_store, user_input
+                                    selected_memory_store, user_input, chat_agent
                                 )
                                 content = user_input + knowledge_rag + memory_rag
                                 st.write_stream(
@@ -177,12 +177,13 @@ def chat_page(username):
                                         content, current_thread.id
                                     )
                                 )
-                            chat.append_memory(
-                                selected_memory_store,
-                                user_input,
-                                chat_agent.last_message,
-                                chat_agent,
-                            )
+                            if selected_memory_store != "None":
+                                chat.append_memory(
+                                    selected_memory_store,
+                                    user_input,
+                                    chat_agent.last_message,
+                                    chat_agent,
+                                )
                             chat.post_message(
                                 current_thread.thread_id,
                                 chat_agent.name,
