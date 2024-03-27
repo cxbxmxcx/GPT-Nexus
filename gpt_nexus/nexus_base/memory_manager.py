@@ -236,9 +236,8 @@ class MemoryManager:
                 items = "\n".join(items)
 
                 # 2. get the semantic response asking to summarize the memories
-                summarization = "Summarize the following memories:\n"
                 summarized_memories = chat_agent.get_semantic_response(
-                    summarization, items
+                    memory_function.summarization_prompt, items
                 )
 
                 # 3. get the semantic response asking to extract new memories

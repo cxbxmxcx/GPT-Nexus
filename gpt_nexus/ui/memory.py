@@ -270,6 +270,12 @@ def memory_page(username):
 
         memory_function = chat.get_memory_function(memory_store.memory_type)
         st.text_area("Memory Function:", memory_function.function_prompt, disabled=True)
+        st.text_area(
+            "Augmentation Prompt:", memory_function.augmentation_prompt, disabled=True
+        )
+        st.text_area(
+            "Summarization Prompt:", memory_function.summarization_prompt, disabled=True
+        )
 
         if st.button("Save Configuration"):
             chat.update_memory_store(memory_store)
