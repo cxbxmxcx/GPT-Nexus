@@ -9,6 +9,7 @@ from langchain_text_splitters import (
 )
 from openai import OpenAI
 
+from gpt_nexus.nexus_base.chat_models import MemoryType
 from gpt_nexus.nexus_base.utils import (
     convert_keys_to_lowercase,
     extract_code,
@@ -33,30 +34,62 @@ class MemoryManager:
             self.client.embeddings.create(input=[text], model=model).data[0].embedding
         )
 
-    def query_memories(self, memory_store, input_text, n_results=5):
-        if memory_store is None or input_text is None:
+    def query_memories(self, memory_store_name, input_text, n_results=5):
+        if memory_store_name is None or input_text is None:
             return None
 
         chroma_client = chromadb.PersistentClient(path=self.CHROMA_DB)
-        collection = chroma_client.get_or_create_collection(name=memory_store)
+        collection = chroma_client.get_or_create_collection(name=memory_store_name)
         embedding = self.get_memory_embedding(input_text)
         docs = collection.query(
             query_embeddings=[embedding], n_results=n_results, include=["documents"]
         )
         return docs["documents"]
 
-    def apply_memory_RAG(self, memory_store, input_text, n_results=5):
+    def apply_memory_RAG(
+        self, memory_store, memory_function, input_text, agent, n_results=5
+    ):
         if memory_store is None or input_text is None:
             return None
 
-        docs = self.query_memories(memory_store, input_text, n_results)
+        # basic form of memory
+        if memory_store.memory_type == MemoryType.CONVERSATIONAL.value:
+            docs = self.query_memories(memory_store.name, input_text, n_results)
 
-        prompt = ""
-        if docs:
-            prompt += "\nUse the following memories to help answer the question:\n"
-            for i, doc in enumerate(docs):
-                prompt += f"Memory {i+1}:\n{doc}\n"
-        return prompt
+            prompt = ""
+            if docs:
+                prompt += "\nUse the following memories to help answer the question:\n"
+                for i, doc in enumerate(docs):
+                    prompt += f"Memory {i+1}:\n{doc}\n"
+            return prompt
+        else:
+            # semantic form of memory
+            semantics = agent.get_semantic_response(
+                memory_function.augmentation_prompt, input_text
+            )
+            semantics, code = extract_code(semantics)
+            if code:
+                semantics = code[0][1]
+            semantics = json.loads(semantics)
+            semantics = convert_keys_to_lowercase(semantics)
+            semantics = sum(
+                [
+                    semantics[key.lower()]
+                    for key in memory_function.augmentation_keys.split(",")
+                ],
+                [],
+            )
+
+            memories = []
+            for semantic in semantics:
+                docs = self.query_memories(memory_store.name, semantic, n_results)
+                memories.extend(docs)
+
+            prompt = f"\nThe following memories are specific to {memory_function.augmentation_keys} and may help provide additional context:\n"
+            for memory in memories:
+                prompt += f"Memory:\n{memory}\n"
+
+            return prompt
 
     def get_memories(self, memory_store, include=["documents", "embeddings"]):
         if memory_store is None:
@@ -161,22 +194,77 @@ class MemoryManager:
             {llm_response}
             """
 
-        memories = agent.get_semantic_response(memory_function.function_prompt, memory)
-        memories, code = extract_code(memories)
-        if code:
-            memories = code[0][1]
-        memories = json.loads(memories)
-        memories = convert_keys_to_lowercase(memories)
-        memories = sum(
-            [memories[key.lower()] for key in memory_function.function_keys.split(",")],
-            [],
-        )
+        try:
+            memories = agent.get_semantic_response(
+                memory_function.function_prompt, memory
+            )
+            memories, code = extract_code(memories)
+            if code:
+                memories = code[0][1]
+            memories = json.loads(memories)
+            memories = convert_keys_to_lowercase(memories)
+            memories = sum(
+                [
+                    memories[key.lower()]
+                    for key in memory_function.function_keys.split(",")
+                ],
+                [],
+            )
 
-        for memory in memories:
-            embedding = self.get_memory_embedding(memory)
-            id = id_hash(memory)
-            docs = collection.get(ids=[id], include=["documents"])["documents"]
-            if docs is None or len(docs) == 0:
-                collection.add(embeddings=[embedding], documents=[memory], ids=[id])
+            for memory in memories:
+                embedding = self.get_memory_embedding(memory)
+                id = id_hash(memory)
+                docs = collection.get(ids=[id], include=["documents"])["documents"]
+                if docs is None or len(docs) == 0:
+                    collection.add(embeddings=[embedding], documents=[memory], ids=[id])
 
-        return True
+            return True
+        except Exception as e:
+            print("Error appending memory: ", e)
+            return False
+
+    def compress_memories(
+        self, memory_store, grouped_memories, memory_function, chat_agent
+    ):
+        chroma_client = chromadb.PersistentClient(path=self.CHROMA_DB)
+        chroma_client.delete_collection(memory_store.name)
+        collection = chroma_client.get_or_create_collection(name=memory_store.name)
+
+        for key, items in grouped_memories.items():
+            try:
+                # 1. create a list of memories
+                items = "\n".join(items)
+
+                # 2. get the semantic response asking to summarize the memories
+                summarization = "Summarize the following memories:\n"
+                summarized_memories = chat_agent.get_semantic_response(
+                    summarization, items
+                )
+
+                # 3. get the semantic response asking to extract new memories
+                memories = chat_agent.get_semantic_response(
+                    memory_function.function_prompt, summarized_memories
+                )
+                memories, code = extract_code(memories)
+                if code:
+                    memories = code[0][1]
+                memories = json.loads(memories)
+                memories = convert_keys_to_lowercase(memories)
+                memories = sum(
+                    [
+                        memories[key.lower()]
+                        for key in memory_function.function_keys.split(",")
+                    ],
+                    [],
+                )
+                # 4. add the new memories to the collection
+                for memory in memories:
+                    embedding = self.get_memory_embedding(memory)
+                    id = id_hash(memory)
+                    docs = collection.get(ids=[id], include=["documents"])["documents"]
+                    if docs is None or len(docs) == 0:
+                        collection.add(
+                            embeddings=[embedding], documents=[memory], ids=[id]
+                        )
+            except Exception as e:
+                print("Error compressing memories: ", e)

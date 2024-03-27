@@ -1,7 +1,7 @@
 import streamlit as st
 
 
-def create_options_ui(custom_options):
+def create_options_ui(custom_options, key="default"):
     user_inputs = {}
     for attr_name, attr_details in custom_options.items():
         attr_type = attr_details["type"]
@@ -14,6 +14,7 @@ def create_options_ui(custom_options):
                 index=attr_details["options"].index(default)
                 if default in attr_details["options"]
                 else 0,
+                key=f"{key}_{attr_name}",
             )
         elif attr_type == "numeric":
             # Use slider for numeric options with a default value and specific step
@@ -24,11 +25,12 @@ def create_options_ui(custom_options):
                 max_value=attr_details["max"],
                 value=default,  # Set the default value here
                 step=step,
+                key=f"{key}_{attr_name}",
             )
         elif attr_type == "bool":
             # Use checkbox for boolean options with a default enabled/disabled state
             option = st.checkbox(
-                f"Enable {attr_name}", value=default
+                f"Enable {attr_name}", value=default, key=f"{key}_{attr_name}"
             )  # Use default value as the initial state
 
         user_inputs[attr_name] = option

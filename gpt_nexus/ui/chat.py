@@ -169,7 +169,7 @@ def chat_page(username):
                                     selected_knowledge_store, user_input
                                 )
                                 memory_rag = chat.apply_memory_RAG(
-                                    selected_memory_store, user_input
+                                    selected_memory_store, user_input, chat_agent
                                 )
                                 content = user_input + knowledge_rag + memory_rag
                                 st.write_stream(

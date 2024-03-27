@@ -111,6 +111,8 @@ class MemoryFunction(BaseModel):
     )
     function_prompt = TextField()
     function_keys = CharField()
+    augmentation_prompt = TextField(null=True)
+    augmentation_keys = CharField(null=True)
 
 
 class MemoryStore(BaseModel):
@@ -153,16 +155,22 @@ def initialize_db():
         memory_type=MemoryType.SEMANTIC.value,
         function_prompt="Summarize the facts and preferences in the conversation. Return a JSON object with the following keys: 'questions', 'facts', 'preferences'. Each key should have a list of statements that are relevant to that category. Return only the JSON object and nothing else.",
         function_keys="questions,facts,preferences",
+        augmentation_prompt="Generate a set of questions that can be asked based on the conversation. Return a JSON object with the following keys: 'questions'. Each key should have a list of questions that can be asked based on the conversation. Return only the JSON object and nothing else.",
+        augmentation_keys="questions",
     )
     MemoryFunction.create(
         memory_type=MemoryType.PROCEDURAL.value,
         function_prompt="Summarize all the tasks, steps and procedures that are identified in the conversation. Return a JSON object with the following keys: 'tasks', 'steps', 'procedures'. Each key should have a list of statements that are relevant to that category. Return only the JSON object and nothing else.",
         function_keys="tasks,steps,procedures",
+        augmentation_prompt="Generate a set of tasks that need to be completed based on the conversation. Return a JSON object with the following keys: 'tasks'. Each key should have a list of tasks that need to be completed based on the conversation. Return only the JSON object and nothing else.",
+        augmentation_keys="tasks",
     )
     MemoryFunction.create(
         memory_type=MemoryType.EPISODIC.value,
         function_prompt="Extract all the events and episodes that are identified in the conversation. Return a JSON object with the following keys: 'events', 'episodes'. Each key should have a list of statements that are relevant to that category. Return only the JSON object and nothing else.",
         function_keys="events,episodes",
+        augmentation_prompt="Generate a set of events that have occurred based on the conversation. Return a JSON object with the following keys: 'events'. Each key should have a list of events that have occurred based on the conversation. Return only the JSON object and nothing else.",
+        augmentation_keys="events",
     )
 
 
