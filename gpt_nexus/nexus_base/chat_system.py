@@ -345,6 +345,10 @@ class ChatSystem:
     def load_memory(self, memory_store, memory, agent):
         if memory_store is None or memory is None:
             return None
+
+    def load_memory(self, memory_store, memory, agent):
+        if memory_store is None or memory is None:
+            return None
         memory_store = MemoryStore.get(MemoryStore.name == memory_store)
         memory_function = self.get_memory_function(memory_store.memory_type)
         return self.memory_manager.append_memory(
@@ -401,4 +405,12 @@ class ChatSystem:
         memory_function = self.get_memory_function(memory_store.memory_type)
         return self.memory_manager.compress_memories(
             memory_store, grouped_memories, memory_function, chat_agent
+        )
+
+    def compress_knowledge(self, knowledge_store, grouped_documents, chat_agent):
+        if knowledge_store is None or grouped_documents is None:
+            return None
+        knowledge_store = KnowledgeStore.get(KnowledgeStore.name == knowledge_store)
+        return self.knowledge_manager.compress_knowledge(
+            knowledge_store, grouped_documents, chat_agent
         )

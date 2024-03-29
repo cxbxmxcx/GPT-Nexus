@@ -1,65 +1,7 @@
-import plotly.graph_objects as go
 import streamlit as st
-from sklearn.decomposition import PCA
 
 from gpt_nexus.ui.cache import get_chat_system
-
-
-def view_embeddings(chat, knowledge_store):
-    """
-    Displays all documents and their embeddings from ChromaDB.
-    """
-    if knowledge_store is None:
-        st.error("Please create a knowledge store first.")
-        st.stop()
-
-    documents = chat.get_documents(knowledge_store, include=["documents", "embeddings"])
-
-    embeddings = documents["embeddings"]
-    documents = documents["documents"]
-
-    if embeddings and documents and len(embeddings) > 3:
-        # Applying PCA to reduce dimensions to 3
-        pca = PCA(n_components=3)
-        reduced_embeddings = pca.fit_transform(embeddings)
-
-        # Creating a 3D plot using Plotly
-        fig = go.Figure(
-            data=[
-                go.Scatter3d(
-                    x=reduced_embeddings[:, 0],
-                    y=reduced_embeddings[:, 1],
-                    z=reduced_embeddings[:, 2],
-                    mode="markers",
-                    text=documents,  # Adding document texts for hover
-                    hoverinfo="text",  # Showing only the text on hover
-                    marker=dict(
-                        size=12,
-                        color=[
-                            f"rgb({int((x+1)*128)}, {int((y+1)*128)}, {int((z+1)*128)})"
-                            for x, y, z in zip(
-                                reduced_embeddings[:, 0],
-                                reduced_embeddings[:, 1],
-                                reduced_embeddings[:, 2],
-                            )
-                        ],
-                        opacity=0.8,
-                    ),
-                )
-            ],
-            layout=dict(
-                title="Document Embeddings",
-                scene=dict(
-                    xaxis_title="PCA 1",
-                    yaxis_title="PCA 2",
-                    zaxis_title="PCA 3",
-                ),
-                height=800,
-            ),
-        )
-        st.plotly_chart(fig)
-    else:
-        st.error("Not enough documents available to display.")
+from gpt_nexus.ui.embeddings import view_embeddings
 
 
 def add_document_to_store(chat, knowledge_store):
@@ -74,15 +16,16 @@ def add_document_to_store(chat, knowledge_store):
     )
 
     if document_file is not None:
-        # Assuming text files for simplicity, but you may need to handle different file types differently
-        document_name = document_file.name
+        with st.spinner("Processing document..."):
+            # Assuming text files for simplicity, but you may need to handle different file types differently
+            document_name = document_file.name
 
-        chat.load_document(knowledge_store, document_file)
-        st.success("Document uploaded and processed successfully!")
-        chat.add_document_to_store(knowledge_store, document_name)
-        st.success(
-            f"Document '{document_name}' added to Knowledge Store '{knowledge_store}'!"
-        )
+            chat.load_document(knowledge_store, document_file)
+            st.success("Document uploaded and processed successfully!")
+            chat.add_document_to_store(knowledge_store, document_name)
+            st.success(
+                f"Document '{document_name}' added to Knowledge Store '{knowledge_store}'!"
+            )
 
 
 def knowledge_page(username):
@@ -146,7 +89,7 @@ def knowledge_page(username):
 
     with config_tabs[2]:
         st.subheader("View Embeddings in Knowledge Store")
-        view_embeddings(chat, selected_store)
+        view_embeddings(chat, selected_store, "knowledge")
 
     with config_tabs[3]:
         st.subheader("Query Knowledge Store")

@@ -7,9 +7,9 @@ from langchain_text_splitters import (
     CharacterTextSplitter,
     RecursiveCharacterTextSplitter,
 )
-from openai import OpenAI
 
 from gpt_nexus.nexus_base.chat_models import MemoryType
+from gpt_nexus.nexus_base.embedding_manager import EmbeddingManager
 from gpt_nexus.nexus_base.utils import (
     convert_keys_to_lowercase,
     extract_code,
@@ -21,18 +21,11 @@ load_dotenv()
 
 class MemoryManager:
     def __init__(self):
-        self.client = OpenAI()
+        self.embedding_manager = EmbeddingManager()
         self.CHROMA_DB = "nexus_memory_chroma_db"
 
-    def get_memory_embedding(self, text, model="text-embedding-3-small"):
-        if text is None:
-            return None
-
-        text = str(text)
-        text = text.replace("\n", " ")
-        return (
-            self.client.embeddings.create(input=[text], model=model).data[0].embedding
-        )
+    def get_memory_embedding(self, text):
+        return self.embedding_manager.get_embedding(text)
 
     def query_memories(self, memory_store_name, input_text, n_results=5):
         if memory_store_name is None or input_text is None:
@@ -115,36 +108,6 @@ class MemoryManager:
                 length_function=len,
                 is_separator_regex=False,
             )
-
-    # def load_memory(self, memory_store, memory):
-    #     """
-    #     Loads a document from upload, splits it based on chunking option and saves embeddings.
-
-    #     Args:
-    #         uploaded_file: A Streamlit file uploader object.
-    #         chunker: A Langchain TextSplitter object (CharacterTextSplitter or WordTextSplitter).
-    #         chunk_size: The size of each chunk.
-    #         overlap: The size of the overlap between chunks.
-
-    #     Returns:
-    #         None
-    #     """
-    #     if memory_store is not None and memory is not None and len(memory) > 0:
-    #         splitter = self.get_splitter(memory_store)
-    #         docs = splitter.create_documents([memory])
-
-    #         embeddings = [self.get_memory_embedding(doc) for doc in docs]
-
-    #         # create chroma database client
-    #         chroma_client = chromadb.PersistentClient(path=self.CHROMA_DB)
-    #         # get or create a collection
-    #         collection = chroma_client.get_or_create_collection(name=memory_store.name)
-    #         docs = [str(doc.page_content) for doc in docs]
-    #         ids = [id_hash(m) for m in docs]
-
-    #         collection.add(embeddings=embeddings, documents=docs, ids=ids)
-    #         return True
-    #     return False
 
     def examine_memories(self, memory_store):
         """

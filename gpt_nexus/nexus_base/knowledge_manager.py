@@ -1,3 +1,5 @@
+import json
+
 import chromadb
 import pandas as pd
 from dotenv import load_dotenv
@@ -5,26 +7,24 @@ from langchain_text_splitters import (
     CharacterTextSplitter,
     RecursiveCharacterTextSplitter,
 )
-from openai import OpenAI
 
-from gpt_nexus.nexus_base.utils import id_hash
+from gpt_nexus.nexus_base.embedding_manager import EmbeddingManager
+from gpt_nexus.nexus_base.utils import (
+    convert_keys_to_lowercase,
+    extract_code,
+    id_hash,
+)
 
 load_dotenv()
 
 
 class KnowledgeManager:
     def __init__(self):
-        self.client = OpenAI()
+        self.embedding_manager = EmbeddingManager()
         self.CHROMA_DB = "nexus_knowledge_chroma_db"
 
-    def get_document_embedding(self, text, model="text-embedding-3-small"):
-        if text is None:
-            return None
-        text = str(text)
-        text = text.replace("\n", " ")
-        return (
-            self.client.embeddings.create(input=[text], model=model).data[0].embedding
-        )
+    def get_document_embedding(self, text):
+        return self.embedding_manager.get_embedding(text)
 
     def query_documents(self, knowledge_store, input_text, n_results=5):
         if knowledge_store is None or input_text is None:
@@ -171,3 +171,47 @@ class KnowledgeManager:
         chroma_client = chromadb.PersistentClient(path=self.CHROMA_DB)
         chroma_client.delete_collection(knowledge_store)
         return True
+
+    def compress_knowledge(self, knowledge_store, grouped_items, chat_agent):
+        chroma_client = chromadb.PersistentClient(path=self.CHROMA_DB)
+        chroma_client.delete_collection(knowledge_store.name)
+        collection = chroma_client.get_or_create_collection(name=knowledge_store.name)
+
+        summarization_prompt = "Given a list of dodcuments described below, synthesize these into a concise narrative that captures their essence, significance, facts, important events, plot, and any common themes. Focus on the underlying statements, lessons learned, or how these documents collectively shape an understanding of a particular topic. Please merge similar documents and emphasize unique insights, facts and other information. The aim is to create a compact, meaningful representation of these documents that captures the pertinent information. "
+        function_prompt = "Summarize the documents and create a set of statements that summarize the essence, significance, facts, important events, plot, names, places, and any common themes. Return a JSON object with the following keys: 'statements' and only that key. Return only the JSON object and nothing else."
+        function_keys = "statements"
+
+        for key, items in grouped_items.items():
+            try:
+                # 1. create a list of memories
+                items = "\n".join(items)
+
+                # 2. get the semantic response asking to summarize the memories
+                summarized_memories = chat_agent.get_semantic_response(
+                    summarization_prompt, items
+                )
+
+                # 3. get the semantic response asking to extract new memories
+                documents = chat_agent.get_semantic_response(
+                    function_prompt, summarized_memories
+                )
+                documents, code = extract_code(documents)
+                if code:
+                    documents = code[0][1]
+                documents = json.loads(documents)
+                documents = convert_keys_to_lowercase(documents)
+                documents = sum(
+                    [documents[key.lower()] for key in function_keys.split(",")],
+                    [],
+                )
+                # 4. add the new memories to the collection
+                for document in documents:
+                    embedding = self.get_document_embedding(document)
+                    id = id_hash(document)
+                    docs = collection.get(ids=[id], include=["documents"])["documents"]
+                    if docs is None or len(docs) == 0:
+                        collection.add(
+                            embeddings=[embedding], documents=[document], ids=[id]
+                        )
+            except Exception as e:
+                print("Error compressing documents: ", e)

@@ -80,6 +80,7 @@ def agent_action(func):
                 properties[param.name] = {
                     "type": "string",
                     "enum": ["celsius", "fahrenheit"],
+                    "description": "Temperature unit",
                 }
             else:
                 properties[param.name] = {
