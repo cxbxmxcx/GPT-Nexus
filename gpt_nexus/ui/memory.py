@@ -5,27 +5,6 @@ from gpt_nexus.ui.cache import get_chat_system
 from gpt_nexus.ui.embeddings import get_agent, view_embeddings
 
 
-def get_agent(chat, agent_key):
-    st.title("Memory Compression Settings")
-    agents = chat.get_agent_names()
-    agents = [agent for agent in agents if chat.get_agent(agent).supports_memory]
-    selected_agent = st.selectbox(
-        "Choose an agent engine:",
-        agents,
-        key=agent_key + "agent",
-        # label_visibility="collapsed",
-        help="Choose an agent to chat with.",
-    )
-    chat_agent = chat.get_agent(selected_agent)
-    with st.expander("Agent Options:", expanded=False):
-        options = chat_agent.get_attribute_options()
-        if options:
-            selected_options = create_options_ui(options, agent_key)
-            for key, value in selected_options.items():
-                setattr(chat_agent, key, value)
-    return chat_agent
-
-
 def add_memory_to_store(chat, memory_store):
     if memory_store is None:
         st.error("Please create a memory store first.")
@@ -36,7 +15,7 @@ def add_memory_to_store(chat, memory_store):
     memory = st.text_area("Enter a memory to add to the store:")
 
     if st.button("Add Memory") and memory != "" and memory is not None:
-        chat.load_memory(memory_store, memory)
+        chat.load_memory(memory_store, memory, chat_agent)
         st.success("Memory added successfully!")
 
 
