@@ -402,3 +402,11 @@ class ChatSystem:
         return self.memory_manager.compress_memories(
             memory_store, grouped_memories, memory_function, chat_agent
         )
+
+    def compress_knowledge(self, knowledge_store, grouped_documents, chat_agent):
+        if knowledge_store is None or grouped_documents is None:
+            return None
+        knowledge_store = KnowledgeStore.get(KnowledgeStore.name == knowledge_store)
+        return self.knowledge_manager.compress_knowledge(
+            knowledge_store, grouped_documents, chat_agent
+        )
