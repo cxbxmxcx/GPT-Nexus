@@ -345,6 +345,10 @@ class ChatSystem:
     def load_memory(self, memory_store, memory, agent):
         if memory_store is None or memory is None:
             return None
+
+    def load_memory(self, memory_store, memory, agent):
+        if memory_store is None or memory is None:
+            return None
         memory_store = MemoryStore.get(MemoryStore.name == memory_store)
         memory_function = self.get_memory_function(memory_store.memory_type)
         return self.memory_manager.append_memory(
