@@ -129,6 +129,12 @@ class Document(BaseModel):
     name = CharField()
 
 
+class PromptTemplate(BaseModel):
+    name = CharField(unique=True)
+    content = TextField()
+    inputs = TextField(null=True)
+
+
 def initialize_db():
     db.connect()
     db.create_tables(
@@ -140,6 +146,7 @@ def initialize_db():
             Notification,
             KnowledgeStore,
             Document,
+            PromptTemplate,
             MemoryStore,
             MemoryFunction,
         ],

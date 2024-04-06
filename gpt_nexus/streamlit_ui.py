@@ -6,10 +6,17 @@ from ui.knowledge import knowledge_page
 from ui.login import login_page
 from ui.memory import memory_page
 from ui.profile import profile_page
+from ui.prompts import prompts_page
+from ui.workflow import workflow_page
 
 
 def main():
     st.set_page_config(page_title="GPT Nexus", page_icon="icon.png", layout="wide")
+    if "log_messages" not in st.session_state:
+        st.session_state.log_messages = ""
+
+    if "last_log_message" not in st.session_state:
+        st.session_state.last_log_message = None
     if username := st.session_state.get("username"):
         selected_page = st.sidebar.selectbox(
             "GPT Nexus",
@@ -19,7 +26,8 @@ def main():
                 "Knowledge",
                 "Memory",
                 "Profile",
-                "Workflow",
+                "Prompts",
+                "Workflows",
             ],
         )
         if selected_page == "Agents":
@@ -34,11 +42,14 @@ def main():
         elif selected_page == "Memory":
             memory_page(username)
             return
-        elif selected_page == "Workflows":
-            st.write("Workflows")
+        elif selected_page == "Workflow":
+            workflow_page(username)
             return
         elif selected_page == "Profile":
             profile_page(username)
+            return
+        elif selected_page == "Prompts":
+            prompts_page(username)
             return
         elif selected_page == "Actions":
             actions_page(username)

@@ -48,5 +48,3 @@ def actions_page(username):
             st.write("**Action Type:** Semantic Action")
         else:
             st.write("**Action Type:** Native Action")
-
-    st.write(actions)

@@ -250,6 +250,21 @@ files = [
 ]
 
 [[package]]
+name = "barfi"
+version = "0.7.0"
+description = "Framework for a graphical programming environment."
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "barfi-0.7.0-py3-none-any.whl", hash = "sha256:5f6bea5d1be09d39579fe0c6df5c52c6bd7dd94a2a53a0cb12e92306d82f198e"},
+    {file = "barfi-0.7.0.tar.gz", hash = "sha256:2b920d93f27aa499c9698281af3dd51b8616d2611883e3644511b9e6acb4355f"},
+]
+
+[package.dependencies]
+networkx = ">=2.6.2"
+streamlit = ">=0.63"
+
+[[package]]
 name = "bcrypt"
 version = "4.1.2"
 description = "Modern password hashing for your software and your servers"
@@ -1825,6 +1840,24 @@ files = [
 ]
 
 [[package]]
+name = "networkx"
+version = "3.2.1"
+description = "Python package for creating and manipulating graphs and networks"
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "networkx-3.2.1-py3-none-any.whl", hash = "sha256:f18c69adc97877c42332c170849c96cefa91881c99a7cb3e95b7c659ebdc1ec2"},
+    {file = "networkx-3.2.1.tar.gz", hash = "sha256:9f1bb5cf3409bf324e0a722c20bdb4c20ee39bf1c30ce8ae499c8502b0b5e0c6"},
+]
+
+[package.extras]
+default = ["matplotlib (>=3.5)", "numpy (>=1.22)", "pandas (>=1.4)", "scipy (>=1.9,!=1.11.0,!=1.11.1)"]
+developer = ["changelist (==0.4)", "mypy (>=1.1)", "pre-commit (>=3.2)", "rtoml"]
+doc = ["nb2plots (>=0.7)", "nbconvert (<7.9)", "numpydoc (>=1.6)", "pillow (>=9.4)", "pydata-sphinx-theme (>=0.14)", "sphinx (>=7)", "sphinx-gallery (>=0.14)", "texext (>=0.6.7)"]
+extra = ["lxml (>=4.6)", "pydot (>=1.4.2)", "pygraphviz (>=1.11)", "sympy (>=1.10)"]
+test = ["pytest (>=7.2)", "pytest-cov (>=4.0)"]
+
+[[package]]
 name = "numpy"
 version = "1.26.4"
 description = "Fundamental package for array computing in Python"
@@ -2542,6 +2575,19 @@ files = [
 pyasn1 = ">=0.4.6,<0.6.0"
 
 [[package]]
+name = "pybars3"
+version = "0.9.7"
+description = "Handlebars.js templating for Python 3 and 2"
+optional = false
+python-versions = "*"
+files = [
+    {file = "pybars3-0.9.7.tar.gz", hash = "sha256:6ac847e905e53b9c5b936af112c910475e27bf767f79f4528c16f9af1ec0e252"},
+]
+
+[package.dependencies]
+PyMeta3 = ">=0.5.1"
+
+[[package]]
 name = "pydantic"
 version = "2.6.3"
 description = "Data validation using Python type hints"
@@ -2684,6 +2730,16 @@ files = [
 [package.extras]
 plugins = ["importlib-metadata"]
 windows-terminal = ["colorama (>=0.4.6)"]
+
+[[package]]
+name = "pymeta3"
+version = "0.5.1"
+description = "Pattern-matching language based on OMeta for Python 3 and 2"
+optional = false
+python-versions = "*"
+files = [
+    {file = "PyMeta3-0.5.1.tar.gz", hash = "sha256:18bda326d9a9bbf587bfc0ee0bc96864964d78b067288bcf55d4d98681d05bcb"},
+]
 
 [[package]]
 name = "pypika"
@@ -3295,6 +3351,20 @@ watchdog = {version = ">=2.1.5", markers = "platform_system != \"Darwin\""}
 
 [package.extras]
 snowflake = ["snowflake-connector-python (>=2.8.0)", "snowflake-snowpark-python (>=0.9.0)"]
+
+[[package]]
+name = "streamlit-code-editor"
+version = "0.1.12"
+description = "React-ace editor customized for Streamlit"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "streamlit-code-editor-0.1.12.tar.gz", hash = "sha256:7681cd07ceda5351b9425964196e862002b0c18d04a6d637169385c904ae428d"},
+    {file = "streamlit_code_editor-0.1.12-py3-none-any.whl", hash = "sha256:2886117d9dd1f43ef0843510c4c769283e8a5891e2b7110a61eee4394f7c1ffa"},
+]
+
+[package.dependencies]
+streamlit = ">=0.63"
 
 [[package]]
 name = "streamlit-js-eval"
@@ -4133,4 +4203,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "0730d82f4499c432fc0aabeb8aef457bc2d77ce286fc40badcd66bb31e610c64"
+content-hash = "d81cc05cee02b6af0a92f65856ac545502ff2d667097c7b069b9f7741791b13c"

@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import List
 
 from peewee import *
 
@@ -12,6 +13,7 @@ from gpt_nexus.nexus_base.chat_models import (
     MemoryStore,
     Message,
     Notification,
+    PromptTemplate,
     Subscriber,
     Thread,
     db,
@@ -232,6 +234,49 @@ class ChatSystem:
             print(f"{username} logged out successfully.")
         else:
             print("Username not found.")
+
+    def add_prompt_template(self, template_name, template_content, template_inputs):
+        if isinstance(template_inputs, List):
+            template_inputs = ",".join(template_inputs)
+        with db.atomic():
+            if (
+                PromptTemplate.select()
+                .where(PromptTemplate.name == template_name)
+                .exists()
+            ):
+                raise ValueError("Template name already exists")
+            prompt_template = PromptTemplate.create(
+                name=template_name,
+                content=template_content,
+                inputs=template_inputs,
+            )
+            print(f"Prompt template '{template_name}' added.")
+            return True
+
+    def get_prompt_template(self, template_name):
+        try:
+            return PromptTemplate.get(PromptTemplate.name == template_name)
+        except PromptTemplate.DoesNotExist:
+            return None
+
+    def update_prompt_template(self, template_name, template_content, template_inputs):
+        if isinstance(template_inputs, List):
+            template_inputs = ",".join(template_inputs)
+        with db.atomic():
+            template = PromptTemplate.get(PromptTemplate.name == template_name)
+            template.content = template_content
+            template.inputs = template_inputs
+            template.save()
+            print(f"Prompt template '{template_name}' updated.")
+            return True
+
+    def delete_prompt_template(self, template_name):
+        with db.atomic():
+            query = PromptTemplate.delete().where(PromptTemplate.name == template_name)
+            return query.execute()
+
+    def get_prompt_template_names(self):
+        return [template.name for template in PromptTemplate.select()]
 
     def add_knowledge_store(self, store_name):
         """Add a new knowledge store."""
