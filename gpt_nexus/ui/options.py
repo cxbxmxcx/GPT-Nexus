@@ -35,3 +35,15 @@ def create_options_ui(custom_options, key="default"):
 
         user_inputs[attr_name] = option
     return user_inputs
+
+
+def create_editor_options_ui():
+    with st.expander("Editor Options", expanded=False):
+        height = st.slider("Height", 1, 30, 15, key="height")
+        language = st.selectbox("Language", ["python", "handlebars"], key="lang")
+        theme = st.selectbox("Theme", ["default", "dark", "light"], key="theme")
+        shortcuts = st.selectbox(
+            "Shortcuts", ["vscode", "emacs", "sublime"], key="shortcuts"
+        )
+        focus = st.checkbox("Focus Mode", key="focus")
+        return height, language, theme, shortcuts, focus

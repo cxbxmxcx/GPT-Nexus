@@ -133,6 +133,7 @@ class PromptTemplate(BaseModel):
     name = CharField(unique=True)
     content = TextField()
     inputs = TextField(null=True)
+    outputs = TextField(null=True)
 
 
 def initialize_db():

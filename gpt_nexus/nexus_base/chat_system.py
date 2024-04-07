@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import List
 
 from peewee import *
 
@@ -13,7 +12,6 @@ from gpt_nexus.nexus_base.chat_models import (
     MemoryStore,
     Message,
     Notification,
-    PromptTemplate,
     Subscriber,
     Thread,
     db,
@@ -21,6 +19,7 @@ from gpt_nexus.nexus_base.chat_models import (
 from gpt_nexus.nexus_base.knowledge_manager import KnowledgeManager
 from gpt_nexus.nexus_base.memory_manager import MemoryManager
 from gpt_nexus.nexus_base.profile_manager import ProfileManager
+from gpt_nexus.nexus_base.prompt_template_manager import PromptTemplateManager
 
 
 class ChatSystem:
@@ -36,6 +35,8 @@ class ChatSystem:
 
         self.knowledge_manager = KnowledgeManager()
         self.memory_manager = MemoryManager()
+
+        self.prompt_template_manager = PromptTemplateManager(self)
 
     def load_profiles(self):
         profiles = self.profile_manager.agent_profiles
@@ -235,48 +236,33 @@ class ChatSystem:
         else:
             print("Username not found.")
 
-    def add_prompt_template(self, template_name, template_content, template_inputs):
-        if isinstance(template_inputs, List):
-            template_inputs = ",".join(template_inputs)
-        with db.atomic():
-            if (
-                PromptTemplate.select()
-                .where(PromptTemplate.name == template_name)
-                .exists()
-            ):
-                raise ValueError("Template name already exists")
-            prompt_template = PromptTemplate.create(
-                name=template_name,
-                content=template_content,
-                inputs=template_inputs,
-            )
-            print(f"Prompt template '{template_name}' added.")
-            return True
+    def add_prompt_template(
+        self, template_name, template_content, template_inputs, template_outputs
+    ):
+        return self.prompt_template_manager.add_prompt_template(
+            template_name, template_content, template_inputs, template_outputs
+        )
 
     def get_prompt_template(self, template_name):
-        try:
-            return PromptTemplate.get(PromptTemplate.name == template_name)
-        except PromptTemplate.DoesNotExist:
-            return None
+        return self.prompt_template_manager.get_prompt_template(template_name)
 
-    def update_prompt_template(self, template_name, template_content, template_inputs):
-        if isinstance(template_inputs, List):
-            template_inputs = ",".join(template_inputs)
-        with db.atomic():
-            template = PromptTemplate.get(PromptTemplate.name == template_name)
-            template.content = template_content
-            template.inputs = template_inputs
-            template.save()
-            print(f"Prompt template '{template_name}' updated.")
-            return True
+    def update_prompt_template(
+        self, template_name, template_content, template_inputs, template_outputs
+    ):
+        return self.prompt_template_manager.update_prompt_template(
+            template_name, template_content, template_inputs, template_outputs
+        )
 
     def delete_prompt_template(self, template_name):
-        with db.atomic():
-            query = PromptTemplate.delete().where(PromptTemplate.name == template_name)
-            return query.execute()
+        return self.prompt_template_manager.delete_prompt_template(template_name)
 
     def get_prompt_template_names(self):
-        return [template.name for template in PromptTemplate.select()]
+        return self.prompt_template_manager.get_prompt_template_names()
+
+    def execute_template(self, agent, content, inputs, outputs):
+        return self.prompt_template_manager.execute_template(
+            agent, content, inputs, outputs
+        )
 
     def add_knowledge_store(self, store_name):
         """Add a new knowledge store."""
