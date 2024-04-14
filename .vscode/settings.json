@@ -8,7 +8,7 @@
       "editor.defaultFormatter": "charliermarsh.ruff"
     },
     "python.testing.pytestArgs": [
-      "chatter"
+      "tests"
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true

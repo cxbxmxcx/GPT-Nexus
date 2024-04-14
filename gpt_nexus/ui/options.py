@@ -39,8 +39,10 @@ def create_options_ui(custom_options, key="default"):
 
 def create_editor_options_ui():
     with st.expander("Editor Options", expanded=False):
-        height = st.slider("Height", 1, 30, 15, key="height")
-        language = st.selectbox("Language", ["python", "handlebars"], key="lang")
+        height = st.slider("Height", 1, 60, 25, key="height")
+        language = st.selectbox(
+            "Language", ["python", "handlebars", "yaml"], key="lang"
+        )
         theme = st.selectbox("Theme", ["default", "dark", "light"], key="theme")
         shortcuts = st.selectbox(
             "Shortcuts", ["vscode", "emacs", "sublime"], key="shortcuts"
