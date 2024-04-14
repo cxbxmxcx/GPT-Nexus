@@ -131,6 +131,10 @@ class ChatSystem:
         except ChatParticipants.DoesNotExist:
             return None
 
+    def get_all_participants(self):
+        users = ChatParticipants.select()
+        return [user.username for user in users]
+
     def create_thread(self, title, participant_id):
         with db.atomic():
             thread = Thread.create(title=title)

@@ -165,20 +165,19 @@ def prompts_page(username):
 
             if st.button("Run Test", key="test"):
                 with st.spinner(text="Executing prompt/function by Agent..."):
-                    iprompt, oprompt, result = chat.execute_template(
+                    iprompt, iresult, oprompt, oresult = chat.execute_template(
                         agent, current_content, inputs, current_outputs
                     )
-                    st.subheader("Rendered Prompt:")
-                    st.write(iprompt)
 
-                if result:
-                    cola, colb, colc = st.columns(3)
-                    with cola.container(height=400):
-                        st.write("Input Prompt")
+                if iresult:
+                    with st.container():
+                        st.subheader("Input Prompt")
                         st.write(iprompt)
-                    with colb.container(height=400):
-                        st.write("Output Prompt")
+                        st.subheader("Response")
+                        st.write(iresult)
+                if oresult:
+                    with st.container():
+                        st.subheader("Output Response")
                         st.write(oprompt)
-                    with colc.container(height=400):
-                        st.write("Response")
-                        st.write(result)
+                        st.subheader("Output Prompt Response")
+                        st.write(oresult)

@@ -12,11 +12,8 @@ class TemplateTransformer(Transformer):
         self.context = context
         self.agent = agent
         self.manager = manager
+        self.helpers = helpers
 
-    # @v_args(inline=True)
-    # def variable(self, token):
-    #     value = self.context.get(str(token), "")
-    #     return value
     @v_args(inline=True)
     def variable(self, items):
         if isinstance(items, list):
@@ -27,28 +24,28 @@ class TemplateTransformer(Transformer):
         #     print(f"Variable '{name}': {value}")
         return value
 
-    # @v_args(inline=True)
-    # def partial(self, items):
-    #     partial_template = self.get_prompt_template(partial_name)
-    #     partial_result = ""
-    #     if partial_template:
-    #         partial_result = self.execute_template(
-    #             self.agent,
-    #             partial_template.content,
-    #             self.context,
-    #             partial_template.outputs,
-    #             partial_execution=True,
-    #         )
-    #     return partial_result
-
     @v_args(inline=True)
     def partial(self, *items):
         name = items[0].value
         args = items[1:]
         # Process arguments for partials
         processed_args = [self.transform(arg) for arg in args]
+
         # Convert all elements to strings
         args_str = "".join(self.convert_to_string(arg) for arg in processed_args)
+        if "," in args_str:
+            args_str = args_str.split(",")
+        elif " " in args_str:
+            args_str = args_str.split(" ")
+        else:
+            args_str = [args_str]
+
+        args = {}
+        for arg in args_str:
+            if isinstance(arg, str):
+                earg = self.context.get(arg, "")
+                if earg:
+                    args[arg] = earg
 
         partial_template = self.manager.get_prompt_template(name)
 
@@ -61,55 +58,38 @@ class TemplateTransformer(Transformer):
                 partial_execution=True,
             )
         return partial_result
-        # print(f"Partial '{name}' with args: {args_str}")
-        # return f"<Partial: {name} Args: {args_str}>"
-
-    # @v_args(inline=True)
-    # def helper(self, token, *args):
-    #     # Placeholder for helper function logic
-    #     return f"<Helper: {token} - Args: {args}>"
 
     @v_args(inline=True)
-    def helper(self, items):
+    def helper(self, *items):
         name = items[0].value
+        if name not in self.helpers:
+            print(f"Helper '{name}' not found")
+            return ""
+
         args = items[1:]
         # Process arguments for helpers
-        processed_args = [self.transform(self.parser.parse(arg)) for arg in args]
+        processed_args = [self.transform(arg) for arg in args]
+
         # Convert all elements to strings
         args_str = "".join(self.convert_to_string(arg) for arg in processed_args)
-        print(f"Helper '{name}' with args: {args_str}")
-        return f"<Helper: {name} Args: {args_str}>"
+        if "," in args_str:
+            args_str = args_str.split(",")
+        elif " " in args_str:
+            args_str = args_str.split(" ")
+        else:
+            args_str = [args_str]
 
-    # def if_statement(self, items):
-    #     condition = str(items[0])
-    #     content = items[1:]
-    #     if self.context.get(condition, False):
-    #         result = "".join(self.transform(self.parser.parse(c)) for c in content)
-    #         return result
-    #     return ""
+        args = []
+        for arg in args_str:
+            if isinstance(arg, str):
+                earg = self.context.get(arg, "")
+                if earg:
+                    args.append(earg)
 
-    def if_statement(self, items):
-        args = items[0]
-        content = items[1:]
-        processed_args = [self.transform(self.parser.parse(arg)) for arg in args]
-        condition = processed_args[0]
-
-        print(f"If statement with condition '{condition}'")
-        if self.context.get(condition, False):
-            result = "".join(self.transform(c) for c in content)
-            return result
-        return ""
-
-    def loop_statement(self, items):
-        var_name = items[0].value
-        content = items[1:]
-        print(f"Loop statement for '{var_name}'")
-        output = ""
-        collection = self.context.get(var_name, [])
-        for item in collection:
-            loop_context = {**self.context, **item}
-            output += "".join(self.transform(self.parser.parse(c)) for c in content)
-        return output
+        helper_func = self.helpers[name]
+        result = helper_func(*args)
+        print(f"Helper '{name}' with args: {args}, result: {result}")
+        return result
 
     @v_args(inline=True)
     def text(self, items):
@@ -142,48 +122,10 @@ class PromptTemplateManager:
         self.parser = self.init_template_parser()
 
     def init_template_parser(self):
-        template_grammar = """
-        ?start: template
-
-        ?template: (text | variable | partial | helper | if_statement | loop_statement)*
-
-        variable: "{{" VAR "}}"
-        partial: "{{>" VAR "}}" template "{{/" VAR "}}"
-        helper: "{{#" VAR "}}" template "{{/" VAR "}}"
-        if_statement: "{{#if" VAR "}}" template "{{/if}}"
-        loop_statement: "{{#each" VAR "}}" template "{{/each}}"
-
-        VAR: /[a-zA-Z_][a-zA-Z0-9_]*/
-        text: /[^{}]+/
-
-        %ignore " "
-        
-        """
-
-        template_grammar = """
-        ?start: template
-
-        template: (text | variable | partial | helper | if_statement | loop_statement)*
-
-        text: /[^{{]+/
-
-        variable: "{{" VAR "}}"
-        partial: "{{>" VAR partial_args "}}"
-        partial_args: (variable | text)*
-        helper: "{{#" VAR helper_args "}}"
-        helper_args: (variable | text)*
-        if_statement: "{{#if" if_args "}}" template "{{/if}}"
-        if_args: (variable | text)*
-        loop_statement: "{{#each" VAR "}}" template "{{/each}}"
-
-        %import common.CNAME -> VAR
-        %import common.WS_INLINE
-        %ignore WS_INLINE
-        """
         template_grammar = """        
         ?start: template
 
-        template: (text | variable | partial | helper | if_statement | loop_statement)*
+        template: (text | variable | partial | helper )*
 
         text: /[^\\{\\}]+/
 
@@ -191,10 +133,7 @@ class PromptTemplateManager:
         partial: "{{>" VAR partial_args "}}"
         partial_args: (variable | text)*
         helper: "{{#" VAR helper_args "}}"
-        helper_args: (variable | text)*
-        if_statement: "{{#if" if_args "}}" template "{{/if}}"
-        if_args: (variable | text)*
-        loop_statement: "{{#each" VAR "}}" template "{{/each}}"
+        helper_args: (variable | text)*        
 
         %import common.CNAME -> VAR
         %import common.WS_INLINE
@@ -271,7 +210,20 @@ class PromptTemplateManager:
     ):
         nexus = self.nexus
 
-        template_data = yaml.safe_load(content)
+        template_data = None
+        try:
+            template_data = yaml.safe_load(content)
+        except yaml.YAMLError as e:
+            if hasattr(e, "problem_mark"):
+                mark = e.problem_mark
+                error_message = (
+                    f"Error at line {mark.line + 1}, column {mark.column + 1}: {str(e)}"
+                )
+            else:
+                error_message = str(e)
+            raise ValueError(
+                f"Error loading YAML content: {error_message}\n\n{content}"
+            )
 
         # ttype = template_data.get("type", "prompt")  # prompt, function/action, semantic
         tinputs = template_data.get("inputs", {})
@@ -291,14 +243,10 @@ class PromptTemplateManager:
         outputs = {}
         iprompt = None
         oprompt = None
-        result = None
+        iresult = None
+        oresult = None
 
         if input_prompt:
-            # iprompt = self._execute_partials(input_prompt, agent, einputs)
-
-            # compiler = Compiler()
-            # template = compiler.compile(iprompt)
-            # iprompt = template(einputs, helpers=helpers)
             parsed_tree = self.parser.parse(input_prompt)
 
             # Transform the parsed tree
@@ -318,13 +266,11 @@ class PromptTemplateManager:
                 outputs["output"] = iprompt
             else:
                 outputs["output"] = iprompt
-            result = outputs["output"]
+            iresult = outputs["output"]
 
-        eoutputs = self._extract_set_variables(toutputs, outputs)
+        eoutputs = self._extract_set_variables(toutputs, outputs | inputs)
         output_prompt = toutputs.get("template", "")
         if output_prompt and eoutputs:
-            # oprompt = self._execute_partials(output_prompt, agent, eoutputs)
-
             parsed_tree = self.parser.parse(output_prompt)
 
             # Transform the parsed tree
@@ -338,12 +284,15 @@ class PromptTemplateManager:
             oprompt = transformer.transform(parsed_tree)
 
             if toutputs.get("type") == "prompt":
-                result = agent.get_semantic_response(agent.profile.persona, oprompt)
+                oresult = agent.get_semantic_response(agent.profile.persona, oprompt)
             elif toutputs.get("type") == "function":
-                result = oprompt
+                oresult = oprompt
             else:
-                result = oprompt
+                oresult = oprompt
 
         if partial_execution:
-            return result
-        return iprompt, oprompt, result
+            if oresult is None:
+                return iresult
+            else:
+                return oresult
+        return iprompt, iresult, oprompt, oresult
