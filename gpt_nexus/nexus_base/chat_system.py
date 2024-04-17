@@ -250,6 +250,11 @@ class ChatSystem:
     def get_prompt_template(self, template_name):
         return self.prompt_template_manager.get_prompt_template(template_name)
 
+    def get_prompt_template_inputs_outputs(self, template_content):
+        return self.prompt_template_manager.get_prompt_template_inputs_outputs(
+            template_content
+        )
+
     def update_prompt_template(
         self, template_name, template_content, template_inputs, template_outputs
     ):

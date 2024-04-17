@@ -39,8 +39,6 @@ def prompts_page(username):
         selected_template_name = st.selectbox("Select a template", template_names)
         if selected_template_name == "Create New Template":
             new_name = st.text_input("Template Name").strip()
-            new_inputs = st.text_input("Inputs (comma-separated)")
-            new_outputs = st.text_input("Outputs (comma-separated)")
             height, language, theme, shortcuts, focus = create_editor_options_ui()
             response_dict = code_editor(
                 "",
@@ -60,8 +58,6 @@ def prompts_page(username):
                         chat.add_prompt_template(
                             new_name,
                             new_content,
-                            [input.strip() for input in new_inputs.split(",")],
-                            [output.strip() for output in new_outputs.split(",")],
                         )
                         st.success(f"Prompt Template '{new_name}' added!")
                     except Exception as e:
@@ -72,14 +68,6 @@ def prompts_page(username):
             # Load and display the selected template for editing
             selected_template = chat.get_prompt_template(selected_template_name)
             edited_name = st.text_input("Template Name", value=selected_template_name)
-            edited_inputs = st.text_input(
-                "Inputs (comma-separated)",
-                value=", ".join(selected_template.inputs.split(",")),
-            )
-            edited_outpus = st.text_input(
-                "Outputs (comma-separated)",
-                value=", ".join(selected_template.outputs.split(",")),
-            )
             height, language, theme, shortcuts, focus = create_editor_options_ui()
             response_dict = code_editor(
                 selected_template.content,
@@ -99,8 +87,6 @@ def prompts_page(username):
                     chat.update_prompt_template(
                         edited_name,
                         edited_content,
-                        [input.strip() for input in edited_inputs.split(",")],
-                        [output.strip() for output in edited_outpus.split(",")],
                     )
                     if edited_name != selected_template_name:
                         # If the name was edited, delete the old entry after saving the new one
@@ -145,20 +131,13 @@ def prompts_page(username):
             if selected_template_name == "Create New Template"
             else edited_content
         )
-        current_inputs = (
-            new_inputs
-            if selected_template_name == "Create New Template"
-            else edited_inputs
-        )
-        current_outputs = (
-            new_outputs
-            if selected_template_name == "Create New Template"
-            else edited_outpus
-        )
 
         if current_content:
+            current_inputs, current_outputs = chat.get_prompt_template_inputs_outputs(
+                current_content
+            )
             inputs = {}
-            for field in current_inputs.split(", "):
+            for field in current_inputs.keys():
                 field = field.strip()  # Clean up whitespace
                 if field:  # Ensure the field is not empty
                     inputs[field] = st.text_input(f"Value for {field}", key=field)

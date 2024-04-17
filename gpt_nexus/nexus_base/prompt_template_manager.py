@@ -205,11 +205,7 @@ class PromptTemplateManager:
                 variables[key] = invars.get(key, value.get("default", ""))
         return variables
 
-    def execute_template(
-        self, agent, content, inputs, outputs, partial_execution=False
-    ):
-        nexus = self.nexus
-
+    def load_template_data(self, content):
         template_data = None
         try:
             template_data = yaml.safe_load(content)
@@ -224,6 +220,32 @@ class PromptTemplateManager:
             raise ValueError(
                 f"Error loading YAML content: {error_message}\n\n{content}"
             )
+        return template_data
+
+    def get_prompt_template_inputs_outputs(self, template_content):
+        template_data = self.load_template_data(template_content)
+
+        tinputs = template_data.get("inputs", {})
+        toutputs = template_data.get("outputs", {})
+
+        tinputs = {
+            key: value
+            for key, value in tinputs.items()
+            if isinstance(value, dict) and "type" in value
+        }
+        toutputs = {
+            key: value
+            for key, value in toutputs.items()
+            if isinstance(value, dict) and "type" in value
+        }
+        return tinputs, toutputs
+
+    def execute_template(
+        self, agent, content, inputs, outputs, partial_execution=False
+    ):
+        nexus = self.nexus
+
+        template_data = self.load_template_data(content)
 
         # ttype = template_data.get("type", "prompt")  # prompt, function/action, semantic
         tinputs = template_data.get("inputs", {})
