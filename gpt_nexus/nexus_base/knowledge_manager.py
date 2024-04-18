@@ -45,7 +45,7 @@ class KnowledgeManager:
         docs = self.query_documents(knowledge_store, input_text, n_results)
 
         prompt = ""
-        if docs:
+        if docs and len(docs) > 0 and len(docs[0]) > 0:
             prompt += "\nUse the following documents to help answer the question:\n"
             for i, doc in enumerate(docs):
                 prompt += f"Document {i+1}:\n{doc}\n"

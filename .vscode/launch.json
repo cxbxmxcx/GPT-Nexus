@@ -16,7 +16,8 @@
       "type": "debugpy",
       "request": "launch",
       "module": "streamlit",
-      "args": ["run", "gpt_nexus/streamlit_ui.py"]
+      "args": ["run", "gpt_nexus/streamlit_ui.py"],
+      "justMyCode": false
     },
     {
       "name": "Python Debugger: FastAPI API",

@@ -19,6 +19,7 @@ from gpt_nexus.nexus_base.chat_models import (
 from gpt_nexus.nexus_base.knowledge_manager import KnowledgeManager
 from gpt_nexus.nexus_base.memory_manager import MemoryManager
 from gpt_nexus.nexus_base.profile_manager import ProfileManager
+from gpt_nexus.nexus_base.prompt_template_manager import PromptTemplateManager
 
 
 class ChatSystem:
@@ -34,6 +35,8 @@ class ChatSystem:
 
         self.knowledge_manager = KnowledgeManager()
         self.memory_manager = MemoryManager()
+
+        self.prompt_template_manager = PromptTemplateManager(self)
 
     def load_profiles(self):
         profiles = self.profile_manager.agent_profiles
@@ -127,6 +130,10 @@ class ChatSystem:
             return ChatParticipants.get(ChatParticipants.username == username)
         except ChatParticipants.DoesNotExist:
             return None
+
+    def get_all_participants(self):
+        users = ChatParticipants.select()
+        return [user.username for user in users]
 
     def create_thread(self, title, participant_id):
         with db.atomic():
@@ -232,6 +239,39 @@ class ChatSystem:
             print(f"{username} logged out successfully.")
         else:
             print("Username not found.")
+
+    def add_prompt_template(
+        self, template_name, template_content, template_inputs, template_outputs
+    ):
+        return self.prompt_template_manager.add_prompt_template(
+            template_name, template_content, template_inputs, template_outputs
+        )
+
+    def get_prompt_template(self, template_name):
+        return self.prompt_template_manager.get_prompt_template(template_name)
+
+    def get_prompt_template_inputs_outputs(self, template_content):
+        return self.prompt_template_manager.get_prompt_template_inputs_outputs(
+            template_content
+        )
+
+    def update_prompt_template(
+        self, template_name, template_content, template_inputs, template_outputs
+    ):
+        return self.prompt_template_manager.update_prompt_template(
+            template_name, template_content, template_inputs, template_outputs
+        )
+
+    def delete_prompt_template(self, template_name):
+        return self.prompt_template_manager.delete_prompt_template(template_name)
+
+    def get_prompt_template_names(self):
+        return self.prompt_template_manager.get_prompt_template_names()
+
+    def execute_template(self, agent, content, inputs, outputs):
+        return self.prompt_template_manager.execute_template(
+            agent, content, inputs, outputs
+        )
 
     def add_knowledge_store(self, store_name):
         """Add a new knowledge store."""
