@@ -33,9 +33,16 @@ def prompts_page(username):
 
     result = None
 
-    left_column, right_column = st.columns([4, 4])
+    config_tabs = st.tabs(
+        [
+            "Write Templates",
+            "Test Templates",
+            "Exercise Templates",
+        ]
+    )
 
-    with left_column:
+    with config_tabs[0]:
+        st.subheader("Write and Edit Prompt Templates")
         selected_template_name = st.selectbox("Select a template", template_names)
         if selected_template_name == "Create New Template":
             new_name = st.text_input("Template Name").strip()
@@ -60,6 +67,7 @@ def prompts_page(username):
                             new_content,
                         )
                         st.success(f"Prompt Template '{new_name}' added!")
+                        st.rerun()
                     except Exception as e:
                         st.error(f"An error occurred: {e}")
                         st.stop()
@@ -124,7 +132,11 @@ def prompts_page(username):
                 st.write(f"##### Documentation for `{selected_method_name}`:")
                 st.code(selected_method.__doc__)
 
-    with right_column:
+    with config_tabs[1]:
+        if selected_template_name == "Create New Template":
+            st.write("Create and save a template before testing it.")
+            return
+        st.subheader("Test Prompt Templates")
         # Use the current content and inputs from the left column for testing
         current_content = (
             new_content
@@ -145,7 +157,11 @@ def prompts_page(username):
             if st.button("Run Test", key="test"):
                 with st.spinner(text="Executing prompt/function by Agent..."):
                     iprompt, iresult, oprompt, oresult = chat.execute_template(
-                        agent, current_content, inputs, current_outputs
+                        selected_template_name,
+                        agent,
+                        current_content,
+                        inputs,
+                        current_outputs,
                     )
 
                 if iresult:
@@ -160,3 +176,6 @@ def prompts_page(username):
                         st.write(oprompt)
                         st.subheader("Output Prompt Response")
                         st.write(oresult)
+
+    with config_tabs[2]:
+        st.subheader("Examine Documents in Knowledge Store")

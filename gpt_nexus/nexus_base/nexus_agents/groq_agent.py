@@ -80,6 +80,7 @@ class GroqAgent(BaseAgent):
             messages=messages,
             temperature=self.temperature,
         )
+        # how can I capture response.usage or the whole response object?
         return str(response.choices[0].message.content)
 
     def get_response_stream(self, user_input, thread_id=None):

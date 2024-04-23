@@ -1,9 +1,18 @@
-from typing import List
-
 import yaml
 from lark import Lark, Token, Transformer, Tree, v_args
 
 from gpt_nexus.nexus_base.chat_models import PromptTemplate, db
+from gpt_nexus.nexus_base.context_variables import tracking_function_context
+
+
+def append_tracking_context(function):
+    tf = tracking_function_context.get("Not set")
+    tracking_function_context.set(f"{tf}:{function}")
+
+
+def remove_tracking_context(function):
+    tf = tracking_function_context.get("Not set")
+    tracking_function_context.set(f"{tf.replace(f':{function}', '')}")
 
 
 class TemplateTransformer(Transformer):
@@ -23,6 +32,13 @@ class TemplateTransformer(Transformer):
         value = self.context.get(name, "")
         #     print(f"Variable '{name}': {value}")
         return value
+
+    def VAR(self, items):
+        if isinstance(items, list):
+            name = items[0].value
+        elif isinstance(items, str):
+            name = items
+        return name
 
     @v_args(inline=True)
     def partial(self, *items):
@@ -50,13 +66,15 @@ class TemplateTransformer(Transformer):
         partial_template = self.manager.get_prompt_template(name)
 
         if partial_template:
+            append_tracking_context(f"partial:{name}")
             partial_result = self.manager.execute_template(
                 self.agent,
                 partial_template.content,
                 self.context,
-                partial_template.outputs,
+                None,
                 partial_execution=True,
             )
+            remove_tracking_context(f"partial:{name}")
         return partial_result
 
     @v_args(inline=True)
@@ -92,9 +110,21 @@ class TemplateTransformer(Transformer):
         return result
 
     @v_args(inline=True)
+    def start_lone_brace(self, *items):
+        return "{"
+
+    @v_args(inline=True)
+    def end_lone_brace(self, *items):
+        return "}"
+
+    @v_args(inline=True)
+    def lone_double_brace(self, *items):
+        return "}}"
+
+    @v_args(inline=True)
     def text(self, items):
         text_value = "".join(items)
-        print(f"Text: {text_value}")
+        # print(f"Text: {text_value}")
         return text_value
 
     @v_args(inline=True)
@@ -130,24 +160,41 @@ class PromptTemplateManager:
         text: /[^\\{\\}]+/
 
         variable: "{{" VAR "}}"
-        partial: "{{>" VAR partial_args "}}"
+        partial: "{{>" VAR partial_args "<}}"
         partial_args: (variable | text)*
-        helper: "{{#" VAR helper_args "}}"
+        helper: "{{#" VAR helper_args "#}}"
         helper_args: (variable | text)*        
 
         %import common.CNAME -> VAR
         %import common.WS_INLINE
         %ignore WS_INLINE
         """
-        return Lark(template_grammar, start="start")
+        template_grammar = """        
+            ?start: template
 
-    def add_prompt_template(
-        self, template_name, template_content, template_inputs, template_outputs
-    ):
-        if isinstance(template_inputs, List):
-            template_inputs = ",".join(template_inputs)
-        if isinstance(template_outputs, List):
-            template_outputs = ",".join(template_outputs)
+            template: (text | variable | partial | helper | start_lone_brace | end_lone_brace | lone_double_brace)*
+
+            text: /[^\\{\\}]+/
+            start_lone_brace: "{" 
+            end_lone_brace: "}"  // Rule to handle single braces
+            lone_double_brace: "}}" // Rule to handle lone closing double braces
+
+            variable: "{{" VAR "}}"
+            partial: "{{>" VAR partial_args "}}"
+            partial_args: (variable | text)*
+            helper: "{{#" VAR helper_args "}}"
+            helper_args: (variable | text)*        
+
+            %import common.CNAME -> VAR
+           
+        """
+        return Lark(
+            template_grammar,
+            start="start",
+            parser="lalr",
+        )
+
+    def add_prompt_template(self, template_name, template_content):
         with db.atomic():
             if (
                 PromptTemplate.select()
@@ -158,8 +205,6 @@ class PromptTemplateManager:
             PromptTemplate.create(
                 name=template_name,
                 content=template_content,
-                inputs=template_inputs,
-                outputs=template_outputs,
             )
             print(f"Prompt template '{template_name}' added.")
             return True
@@ -170,18 +215,10 @@ class PromptTemplateManager:
         except PromptTemplate.DoesNotExist:
             return None
 
-    def update_prompt_template(
-        self, template_name, template_content, template_inputs, template_outputs
-    ):
-        if isinstance(template_inputs, List):
-            template_inputs = ",".join(template_inputs)
-        if isinstance(template_outputs, List):
-            template_outputs = ",".join(template_outputs)
+    def update_prompt_template(self, template_name, template_content):
         with db.atomic():
             template = PromptTemplate.get(PromptTemplate.name == template_name)
             template.content = template_content
-            template.inputs = template_inputs
-            template.outputs = template_outputs
             template.save()
             print(f"Prompt template '{template_name}' updated.")
             return True
@@ -282,7 +319,9 @@ class PromptTemplateManager:
             iprompt = transformer.transform(parsed_tree)
 
             if tinputs.get("type") == "prompt":
+                append_tracking_context("input_prompt")
                 output = agent.get_semantic_response(agent.profile.persona, iprompt)
+                remove_tracking_context("input_prompt")
                 outputs["output"] = output
             elif tinputs.get("type") == "function":
                 outputs["output"] = iprompt
@@ -290,7 +329,9 @@ class PromptTemplateManager:
                 outputs["output"] = iprompt
             iresult = outputs["output"]
 
-        eoutputs = self._extract_set_variables(toutputs, outputs | inputs)
+        eoutputs = (
+            inputs | outputs
+        )  # self._extract_set_variables(toutputs, outputs | inputs)
         output_prompt = toutputs.get("template", "")
         if output_prompt and eoutputs:
             parsed_tree = self.parser.parse(output_prompt)
@@ -306,7 +347,9 @@ class PromptTemplateManager:
             oprompt = transformer.transform(parsed_tree)
 
             if toutputs.get("type") == "prompt":
+                append_tracking_context("output_prompt")
                 oresult = agent.get_semantic_response(agent.profile.persona, oprompt)
+                append_tracking_context("output_prompt")
             elif toutputs.get("type") == "function":
                 oresult = oprompt
             else:

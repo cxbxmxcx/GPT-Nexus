@@ -1,3 +1,4 @@
+import textwrap
 from enum import Enum
 
 from peewee import (
@@ -18,6 +19,30 @@ db = SqliteDatabase("nexus.db")
 class BaseModel(Model):
     class Meta:
         database = db
+
+
+class AgentEngineUsage(BaseModel):
+    id = CharField(primary_key=True)
+    tracking_id = CharField()
+    function = CharField()
+    name = CharField()
+    model = CharField()
+    in_tokens = IntegerField()
+    out_tokens = IntegerField()
+    elapsed_time = IntegerField()
+    timestamp = DateTimeField(constraints=[SQL("DEFAULT CURRENT_TIMESTAMP")])
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "tracking_id": self.tracking_id,
+            "name": self.name,
+            "model": self.model,
+            "in_tokens": self.in_tokens,
+            "out_tokens": self.out_tokens,
+            "elapsed_time": self.elapsed_time,
+            "timestamp": self.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+        }
 
 
 class ChatParticipants(BaseModel):
@@ -138,6 +163,7 @@ def initialize_db():
     db.connect()
     db.create_tables(
         [
+            AgentEngineUsage,
             ChatParticipants,
             Thread,
             Message,
@@ -210,7 +236,7 @@ def initialize_db():
     if not PromptTemplate.select().where(PromptTemplate.name == "reasoning").exists():
         PromptTemplate.create(
             name="reasoning",
-            content="""
+            content=textwrap.dedent("""
             inputs:
                 type: prompt
                 input:
@@ -222,13 +248,13 @@ def initialize_db():
                     to any conclusions. Also, be sure to avoid any assumptions
                     and factor in potential unknowns.
                     {{input}}
-            """,
+            """),
         )
 
     if not PromptTemplate.select().where(PromptTemplate.name == "evaluation").exists():
         PromptTemplate.create(
             name="evaluation",
-            content="""
+            content=textwrap.dedent("""
             inputs:
                 type: prompt
                 input:
@@ -241,7 +267,7 @@ def initialize_db():
                     and the solution {{output}}
                     Evaluate how successful the problem 
                     was solved and return a score 0.0 to 1.0.
-            """,
+            """),
         )
 
     if (
@@ -251,16 +277,17 @@ def initialize_db():
     ):
         PromptTemplate.create(
             name="reasoning_evaluation",
-            content="""
+            content=textwrap.dedent("""
             inputs:
                 type: prompt
                 input:
                     type: string
                 template: |
                     problem: {{input}}
+                    memory: {{>memory_augmentation input}}
                     reasoning: {{>reasoning input}}
 
-                outputs:
+            outputs:
                 type: prompt
                 input:
                     string
@@ -269,119 +296,188 @@ def initialize_db():
                 template: |
                     Summarize how well the problem was solved given the following evaluation
                     evaluation: {{>evaluation input output}}
-            """,
+            """),
         )
 
     if (
         not PromptTemplate.select()
-        .where(PromptTemplate.name == "simple_template")
+        .where(PromptTemplate.name == "memory_augmentation")
         .exists()
     ):
         PromptTemplate.create(
-            name="simple_template",
-            content="""
+            name="memory_augmentation",
+            content=textwrap.dedent("""
+            inputs:
+                type: function
+                input:
+                    type: string
+                template: |
+                    {{#augment_memory input}}
+            helpers:
+                # Defines a method to augment the memory of the input
+                augment_memory: |
+                    def augment_memory(input):
+                        if agent.memory_store:
+                            aug = nexus.apply_memory_RAG(agent.memory_store, input, agent)
+                        return aug
+                        """),
+        )
+
+    if (
+        not PromptTemplate.select()
+        .where(PromptTemplate.name == "knowledge_augmentation")
+        .exists()
+    ):
+        PromptTemplate.create(
+            name="knowledge_augmentation",
+            content=textwrap.dedent("""
+            inputs:
+                type: function
+                input:
+                    type: string
+                template: |
+                    {{#augment_knowledge input}}
+            helpers:
+                # Defines a method to augment the knowledge of the input
+                augment_knowledge: |
+                    def augment_knowledge(input):
+                        if agent.knowledge_store:
+                            aug = nexus.apply_knowledge_RAG(agent.knowledge_store, input)
+                        return aug
+                        """),
+        )
+
+    if (
+        not PromptTemplate.select()
+        .where(PromptTemplate.name == "basic_planner")
+        .exists()
+    ):
+        PromptTemplate.create(
+            name="basic_planner",
+            content=textwrap.dedent("""
             inputs:
                 type: prompt
                 input:
                     type: string
                 template: |
-                    {{#augment input}}
+                    You are a planner for the GPT Nexus.
+                    Your job is to create a properly formatted JSON plan step by step, to satisfy the goal given.
+                    Create a list of subtasks based off the [GOAL] provided.
+                    Each subtask must be from within the [AVAILABLE FUNCTIONS] list. Do not use any functions that are not in the list.
+                    Base your decisions on which functions to use from the description and the name of the function.
+                    Sometimes, a function may take arguments. Provide them if necessary.
+                    The plan should be as short as possible.
+                    You will also be given a list of corrective, suggestive and epistemic feedback from previous plans to help you make your decision.
+                    For example:
 
-                outputs:
-                type: function
+                    [AVAILABLE FUNCTIONS]
+                    EmailConnector.LookupContactEmail
+                    description: looks up the a contact and retrieves their email address
+                    args:
+                    - name: the name to look up
+
+                    WriterSkill.EmailTo
+                    description: email the input text to a recipient
+                    args:
+                    - input: the text to email
+                    - recipient: the recipient's email address. Multiple addresses may be included if separated by ';'.
+
+                    WriterSkill.Translate
+                    description: translate the input to another language
+                    args:
+                    - input: the text to translate
+                    - language: the language to translate to
+
+                    WriterSkill.Summarize
+                    description: summarize input text
+                    args:
+                    - input: the text to summarize
+
+                    FunSkill.Joke
+                    description: Generate a funny joke
+                    args:
+                    - input: the input to generate a joke about
+
+                    [GOAL]
+                    "Tell a joke about cars. Translate it to Spanish"
+
+                    [OUTPUT]
+                        {
+                            "input": "cars",
+                            "subtasks": [
+                                {"function": "FunSkill.Joke"},
+                                {"function": "WriterSkill.Translate", "args": {"language": "Spanish"}}
+                            ]
+                        }
+
+                    [AVAILABLE FUNCTIONS]
+                    WriterSkill.Brainstorm
+                    description: Brainstorm ideas
+                    args:
+                    - input: the input to brainstorm about
+
+                    EdgarAllenPoeSkill.Poe
+                    description: Write in the style of author Edgar Allen Poe
+                    args:
+                    - input: the input to write about
+
+                    WriterSkill.EmailTo
+                    description: Write an email to a recipient
+                    args:
+                    - input: the input to write about
+                    - recipient: the recipient's email address.
+
+                    WriterSkill.Translate
+                    description: translate the input to another language
+                    args:
+                    - input: the text to translate
+                    - language: the language to translate to
+
+                    [GOAL]
+                    "Tomorrow is Valentine's day. I need to come up with a few date ideas.
+                    She likes Edgar Allen Poe so write using his style.
+                    E-mail these ideas to my significant other. Translate it to French."
+
+                    [OUTPUT]
+                        {
+                            "input": "Valentine's Day Date Ideas",
+                            "subtasks": [
+                                {"function": "WriterSkill.Brainstorm"},
+                                {"function": "EdgarAllenPoeSkill.Poe"},
+                                {"function": "WriterSkill.EmailTo", "args": {"recipient": "significant_other"}},
+                                {"function": "WriterSkill.Translate", "args": {"language": "French"}}
+                            ]
+                        }
+
+                    [AVAILABLE FUNCTIONS]
+                    {{#available_functions}}
+
+                    [GOAL]
+                    {{$goal}}
+
+                    [OUTPUT]
+            outputs:                
+                type: prompt                
                 output:
                     type: string
                 template: |
-                    {{>format output}}
-
-                helpers:
+                    {{#execute output}}
+                
+            helpers:
                 # Defines a method to augment the knowledge of the input
-                augment: |
-                    def augment(this, aug):
-                        return "Augment the prompt: " + aug
-                            """,
-        )
-
-    if not PromptTemplate.select().where(PromptTemplate.name == "format").exists():
-        PromptTemplate.create(
-            name="format",
-            content="""
-            inputs:
-                type: function
-                input:
-                    type: string
-                template: |
-                    {{#format input}}
-
-                helpers:
-                # Defines a method to augment the knowledge of the input
-                    format: |
-                        def format(this, aug):
-                            return aug.upper()
-                    """,
-        )
-
-    if not PromptTemplate.select().where(PromptTemplate.name == "header").exists():
-        PromptTemplate.create(
-            name="header",
-            content="""
-                inputs:
-                    type: function
-                    input:
-                        type: string
-                    template: |
-                        {{#header input}}
-                    helpers:
-                        header: |
-                            def header(arg):
-                                return arg.upper()
-                    """,
-        )
-
-    if not PromptTemplate.select().where(PromptTemplate.name == "base_agent").exists():
-        PromptTemplate.create(
-            name="base_agent",
-            content="""
-            inputs:
-                type: prompt
-                input:
-                    type: string
-                template: |
-                    {{>header input}}
-                    
-                    {{#augment_memory input}}
-                    
-                    {{#augment_knowledge input}}
-
-                outputs:
-                    type: function
-                    output:
-                        type: string
-                    template: "{{#format output}}"
-
-                helpers:
-                    # Defines a method to augment the memory of the input
-                    augment_memory: |
-                        def augment_memory(this, arg):
-                            aug = arg
-                            if agent.memory_store:
-                                aug = nexus.apply_memory_RAG(agent.memory_store, arg, agent)
-                            return aug
+                available_functions: |
+                    def available_functions(input):
+                        if agent.knowledge_store:
+                            aug = nexus.apply_knowledge_RAG(agent.knowledge_store, input)
+                        return aug
                         
-                    # Defines a method to augment the knowledge of the input
-                    augment_knowledge: |
-                        def augment_knowledge(this, arg):
-                            aug = arg
-                            if agent.knowledge_store:
-                                aug = nexus.apply_knowledge_RAG(agent.knowledge_store, arg)
-                            return aug
                         
-                    # Modifies the response to uppercase
-                    format: |
-                        def format(response):
-                            return response.upper()
-
-                        """,
+                # Defines a method to execute the plan
+                execute: |
+                    def execute(output):
+                        if agent.memory_store:
+                            aug = nexus.apply_memory_RAG(agent.memory_store, output, agent)
+                        """),
         )
 
 

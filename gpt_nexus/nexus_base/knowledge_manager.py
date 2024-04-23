@@ -8,6 +8,7 @@ from langchain_text_splitters import (
     RecursiveCharacterTextSplitter,
 )
 
+from gpt_nexus.nexus_base.chat_models import KnowledgeStore, db
 from gpt_nexus.nexus_base.embedding_manager import EmbeddingManager
 from gpt_nexus.nexus_base.utils import (
     convert_keys_to_lowercase,
@@ -22,6 +23,25 @@ class KnowledgeManager:
     def __init__(self):
         self.embedding_manager = EmbeddingManager()
         self.CHROMA_DB = "nexus_knowledge_chroma_db"
+        self.initialize_stores()
+
+    def initialize_stores(self):
+        chroma_client = chromadb.PersistentClient(path=self.CHROMA_DB)
+        collections = chroma_client.list_collections()
+        for collection in collections:
+            self.add_knowledge_store(collection.name)
+
+    def add_knowledge_store(self, store_name):
+        if store_name is None or store_name == "None":
+            return False
+        with db.atomic():
+            if (
+                KnowledgeStore.select().where(KnowledgeStore.name == store_name).count()
+                == 0
+            ):
+                KnowledgeStore.create(name=store_name)
+                return True
+        return False
 
     def get_document_embedding(self, text):
         return self.embedding_manager.get_embedding(text)

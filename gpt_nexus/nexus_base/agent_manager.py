@@ -1,3 +1,4 @@
+import functools
 import importlib.util
 import os
 
@@ -112,16 +113,71 @@ class BaseAgent:
         return self.get_supports_knowledge()
 
 
+def get_nested_attr(obj, attr_path):
+    """
+    Safely retrieves a nested attribute using a dot-separated path.
+    """
+    current = obj
+    for attr in attr_path.split("."):
+        try:
+            current = getattr(current, attr)
+        except AttributeError:
+            return None
+    return current
+
+
 class AgentManager:
-    def __init__(self):
+    def __init__(self, tracking_manager=None):
         agent_directory = os.path.join(os.path.dirname(__file__), "nexus_agents")
         self.agents = self._load_agents(agent_directory)
+        self.tracking_manager = tracking_manager
+        if self.tracking_manager:
+            self.track_agents(self.agents)
 
     def get_agent(self, agent_name):
         for agent in self.agents:
             if agent.name == agent_name:
                 return agent
         return None
+
+    def track_agents(self, agents):
+        for agent in agents:
+            self.track_agent_client(agent)
+
+    def track_agent_client(self, agent):
+        client = agent.client
+        create_path = "chat.completions.create"  # Default path for OpenAI style client
+        messages_path = "messages.create"  # Default path for Anthropic style client
+
+        # Get the method for chat.completions.create if it exists
+        chat_create_method = get_nested_attr(client, create_path)
+        if chat_create_method:
+            # Patching OpenAI style client
+            setattr(
+                client.chat.completions,
+                "create",
+                functools.partial(
+                    self.tracking_manager.track_chat_create(
+                        chat_create_method, agent.name
+                    ),
+                    client.chat.completions,
+                ),
+            )
+
+        # Get the method for messages.create if it exists
+        messages_create_method = get_nested_attr(client, messages_path)
+        if messages_create_method:
+            # Patching Anthropic style client
+            setattr(
+                client.messages,
+                "create",
+                functools.partial(
+                    self.tracking_manager.track_messages_create(
+                        messages_create_method, agent.name
+                    ),
+                    client.messages,
+                ),
+            )
 
     def get_agent_names(self):
         return [agent.name for agent in self.agents]

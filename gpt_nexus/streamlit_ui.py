@@ -7,6 +7,7 @@ from ui.login import login_page
 from ui.memory import memory_page
 from ui.profile import profile_page
 from ui.prompts import prompts_page
+from ui.usage import usage_page
 from ui.workflow import workflow_page
 
 
@@ -27,7 +28,8 @@ def main():
                 "Memory",
                 "Profile",
                 "Prompts",
-                "Workflows",
+                "Usage",
+                "Behaviors",
             ],
         )
         if selected_page == "Agents":
@@ -50,6 +52,9 @@ def main():
             return
         elif selected_page == "Prompts":
             prompts_page(username)
+            return
+        elif selected_page == "Usage":
+            usage_page(username)
             return
         elif selected_page == "Actions":
             actions_page(username)

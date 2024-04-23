@@ -36,7 +36,7 @@ def test_execute_simple_input_template(prompt_template_manager, agent):
             name:
                 type: string
             template: |
-                I am {{ name }}, what is your name?
+                I am {{name}}, what is your name?
     """
     inputs = {"name": "John"}
 
@@ -109,7 +109,7 @@ def test_bad_template_content(prompt_template_manager, agent):
         name:
             type: string
         template: |
-            I am {{ name }, what is your name?    
+            I am {{name }}, what is your name?    
     """
     inputs = {"name": "John"}
 
@@ -121,7 +121,7 @@ def test_bad_template_content(prompt_template_manager, agent):
         )
         exception = False
     except Exception as e:
-        assert str(e).startswith("No terminal matches")
+        assert str(e).startswith("Unexpected token")
 
     assert exception
 
@@ -187,12 +187,12 @@ def test_execute_template(prompt_template_manager, agent):
             name:
                 type: string
             template: |
-                I am {{ name }}, what is your name?
+                I am {{name}}, what is your name?
         outputs:
             type: function
             output:
                 type: string                
-            template: "Hello, {{ output }}!"
+            template: "Hello, {{output}}!"
     """
     inputs = {"name": "John"}
 
@@ -387,7 +387,8 @@ def test_helper_agent_functions(prompt_template_manager, agent):
         inputs:
             type: function            
             template: |                
-                Agent type: {{#agent_name}} Memory: {{#memory_store}}
+                Agent type: {{#agent_name}} 
+                Memory: {{#memory_store}}
         helpers:
             agent_name: |
                 def agent_name():
@@ -403,8 +404,8 @@ def test_helper_agent_functions(prompt_template_manager, agent):
         agent, content, inputs, outputs={}, partial_execution=False
     )
 
-    assert iprompt == f"Agent type: {agent.name} Memory: {agent.memory_store}\n"
-    assert iresult == f"Agent type: {agent.name} Memory: {agent.memory_store}\n"
+    assert iprompt == f"Agent type: {agent.name} \nMemory: {agent.memory_store}\n"
+    assert iresult == f"Agent type: {agent.name} \nMemory: {agent.memory_store}\n"
     assert oprompt is None
     assert oresult is None
 
@@ -439,43 +440,136 @@ def test_helper_nexus_functions(prompt_template_manager, agent):
     assert oprompt is None
     assert oresult is None
 
-    # Add more test cases as needed
 
-    # inputs:
-    #     type: prompt
-    #     input:
-    #         type: string
-    #     template: |
-    #         {{>header input}}
+def test_basic_planning_prompt(prompt_template_manager, agent):
+    content = """
+inputs:
+    type: prompt
+    input:
+        type: string
+    template: |
+        You are a planner for the GPT Nexus.
+        Your job is to create a properly formatted JSON plan step by step, to satisfy the goal given.
+        Create a list of subtasks based off the [GOAL] provided.
+        Each subtask must be from within the [AVAILABLE FUNCTIONS] list. Do not use any functions that are not in the list.
+        Base your decisions on which functions to use from the description and the name of the function.
+        Sometimes, a function may take arguments. Provide them if necessary.
+        The plan should be as short as possible.
+        You will also be given a list of corrective, suggestive and epistemic feedback from previous plans to help you make your decision.
+        For example:
 
-    #         {{#augment_memory input}}
+        [AVAILABLE FUNCTIONS]
+        EmailConnector.LookupContactEmail
+        description: looks up the a contact and retrieves their email address
+        args:
+        - name: the name to look up
 
-    #         {{#augment_knowledge input}}
+        WriterSkill.EmailTo
+        description: email the input text to a recipient
+        args:
+        - input: the text to email
+        - recipient: the recipient's email address. Multiple addresses may be included if separated by ';'.
 
-    #     outputs:
-    #     type: function
-    #     output:
-    #         type: string
-    #     template: "{{#format output}}"
+        WriterSkill.Translate
+        description: translate the input to another language
+        args:
+        - input: the text to translate
+        - language: the language to translate to
 
-    #     helpers:
-    #     # Defines a method to augment the memory of the input
-    #     augment_memory: |
-    #         def augment_memory(this, arg):
-    #             aug = arg
-    #             if agent.memory_store:
-    #                 aug = nexus.apply_memory_RAG(agent.memory_store, arg, agent)
-    #             return aug
+        WriterSkill.Summarize
+        description: summarize input text
+        args:
+        - input: the text to summarize
 
-    #     # Defines a method to augment the knowledge of the input
-    #     augment_knowledge: |
-    #         def augment_knowledge(this, arg):
-    #             aug = arg
-    #             if agent.knowledge_store:
-    #                 aug = nexus.apply_knowledge_RAG(agent.knowledge_store, arg)
-    #             return aug
+        FunSkill.Joke
+        description: Generate a funny joke
+        args:
+        - input: the input to generate a joke about
 
-    #     # Modifies the response to uppercase
-    #     format: |
-    #         def format(response):
-    #             return response.upper()
+        [GOAL]
+        "Tell a joke about cars. Translate it to Spanish"
+
+        [OUTPUT]
+            {
+                "input": "cars",
+                "subtasks": [
+                    {"function": "FunSkill.Joke"},
+                    {"function": "WriterSkill.Translate", "args": {"language": "Spanish"}}
+                ]
+            }
+
+        [AVAILABLE FUNCTIONS]
+        WriterSkill.Brainstorm
+        description: Brainstorm ideas
+        args:
+        - input: the input to brainstorm about
+
+        EdgarAllenPoeSkill.Poe
+        description: Write in the style of author Edgar Allen Poe
+        args:
+        - input: the input to write about
+
+        WriterSkill.EmailTo
+        description: Write an email to a recipient
+        args:
+        - input: the input to write about
+        - recipient: the recipient's email address.
+
+        WriterSkill.Translate
+        description: translate the input to another language
+        args:
+        - input: the text to translate
+        - language: the language to translate to
+
+        [GOAL]
+        "Tomorrow is Valentine's day. I need to come up with a few date ideas.
+        She likes Edgar Allen Poe so write using his style.
+        E-mail these ideas to my significant other. Translate it to French."
+
+        [OUTPUT]
+            {
+                "input": "Valentine's Day Date Ideas",
+                "subtasks": [
+                    {"function": "WriterSkill.Brainstorm"},
+                    {"function": "EdgarAllenPoeSkill.Poe"},
+                    {"function": "WriterSkill.EmailTo", "args": {"recipient": "significant_other"}},
+                    {"function": "WriterSkill.Translate", "args": {"language": "French"}}
+                ]
+            }
+
+        [AVAILABLE FUNCTIONS]
+        {{#available_functions}}
+
+        [GOAL]
+        {{input}}
+
+        [OUTPUT]
+outputs:                
+    type: prompt                
+    output:
+        type: string
+    template: |
+        {{#execute output}}
+    
+helpers:
+    # Defines a method to augment the knowledge of the input
+    available_functions: |
+        def available_functions():
+            return ""
+            
+            
+    # Defines a method to execute the plan
+    execute: |
+        def execute(output):
+            return ""
+    """
+    inputs = {"input": "hello"}
+    # Call the execute_template function
+    iprompt, iresult, oprompt, oresult = prompt_template_manager.execute_template(
+        agent, content, inputs, outputs={}, partial_execution=False
+    )
+
+    assert iprompt is not None
+    assert iresult is not None
+    assert oprompt is not None
+    assert oresult is not None

@@ -16,15 +16,22 @@ from gpt_nexus.nexus_base.chat_models import (
     Thread,
     db,
 )
+from gpt_nexus.nexus_base.context_variables import (
+    tracking_function_context,
+    tracking_id_context,
+)
 from gpt_nexus.nexus_base.knowledge_manager import KnowledgeManager
 from gpt_nexus.nexus_base.memory_manager import MemoryManager
 from gpt_nexus.nexus_base.profile_manager import ProfileManager
 from gpt_nexus.nexus_base.prompt_template_manager import PromptTemplateManager
+from gpt_nexus.nexus_base.tracking_manager import TrackingManager
 
 
 class ChatSystem:
     def __init__(self):
-        self.agent_manager = AgentManager()
+        self.tracking_manager = TrackingManager()
+
+        self.agent_manager = AgentManager(self.tracking_manager)
         self.load_agents()
 
         self.action_manager = ActionManager()
@@ -37,6 +44,12 @@ class ChatSystem:
         self.memory_manager = MemoryManager()
 
         self.prompt_template_manager = PromptTemplateManager(self)
+
+    def set_tracking_id(self, tracking_id):
+        tracking_id_context.set(tracking_id)
+
+    def set_tracking_function(self, tracking_function):
+        tracking_function_context.set(tracking_function)
 
     def load_profiles(self):
         profiles = self.profile_manager.agent_profiles
@@ -240,11 +253,9 @@ class ChatSystem:
         else:
             print("Username not found.")
 
-    def add_prompt_template(
-        self, template_name, template_content, template_inputs, template_outputs
-    ):
+    def add_prompt_template(self, template_name, template_content):
         return self.prompt_template_manager.add_prompt_template(
-            template_name, template_content, template_inputs, template_outputs
+            template_name, template_content
         )
 
     def get_prompt_template(self, template_name):
@@ -255,11 +266,9 @@ class ChatSystem:
             template_content
         )
 
-    def update_prompt_template(
-        self, template_name, template_content, template_inputs, template_outputs
-    ):
+    def update_prompt_template(self, template_name, template_content):
         return self.prompt_template_manager.update_prompt_template(
-            template_name, template_content, template_inputs, template_outputs
+            template_name, template_content
         )
 
     def delete_prompt_template(self, template_name):
@@ -268,16 +277,19 @@ class ChatSystem:
     def get_prompt_template_names(self):
         return self.prompt_template_manager.get_prompt_template_names()
 
-    def execute_template(self, agent, content, inputs, outputs):
-        return self.prompt_template_manager.execute_template(
+    def execute_template(self, name, agent, content, inputs, outputs):
+        id = self.tracking_manager.get_next_id()
+        self.set_tracking_id(f"exec_template:{name}:{id}")
+        self.set_tracking_function(f"template:{name}")
+        result = self.prompt_template_manager.execute_template(
             agent, content, inputs, outputs
         )
+        self.set_tracking_id("Not Set")
+        return result
 
     def add_knowledge_store(self, store_name):
         """Add a new knowledge store."""
-        with db.atomic():
-            KnowledgeStore.create(name=store_name)
-            return True
+        return self.knowledge_manager.add_knowledge_store(store_name)
 
     def get_knowledge_store(self, knowledge_store):
         return (
@@ -366,9 +378,7 @@ class ChatSystem:
 
     def add_memory_store(self, store_name):
         """Add a new memory store."""
-        with db.atomic():
-            MemoryStore.create(name=store_name)
-            return True
+        return self.memory_manager.add_memory_store(store_name)
 
     def get_memory_store_names(self):
         return [store.name for store in MemoryStore.select()]
@@ -385,15 +395,14 @@ class ChatSystem:
     def load_memory(self, memory_store, memory, agent):
         if memory_store is None or memory is None:
             return None
-
-    def load_memory(self, memory_store, memory, agent):
-        if memory_store is None or memory is None:
-            return None
         memory_store = MemoryStore.get(MemoryStore.name == memory_store)
         memory_function = self.get_memory_function(memory_store.memory_type)
-        return self.memory_manager.append_memory(
+        self.set_tracking_function("memory:load")
+        result = self.memory_manager.append_memory(
             memory_store, memory, None, memory_function, agent
         )
+        self.set_tracking_function("Not Set")
+        return result
 
     def examine_memories(self, memory_store):
         return self.memory_manager.examine_memories(memory_store)
@@ -403,9 +412,12 @@ class ChatSystem:
             return ""
         memory_store = MemoryStore.get(MemoryStore.name == memory_store)
         memory_function = self.get_memory_function(memory_store.memory_type)
-        return self.memory_manager.apply_memory_RAG(
+        self.set_tracking_function("memory:augment")
+        result = self.memory_manager.apply_memory_RAG(
             memory_store, memory_function, input_text, agent, n_results
         )
+        self.set_tracking_function("Not Set")
+        return result
 
     def get_memory_store(self, memory_store):
         return MemoryStore.select().where(MemoryStore.name == memory_store).first()
@@ -431,9 +443,12 @@ class ChatSystem:
             return None
         memory_store = MemoryStore.get(MemoryStore.name == memory_store)
         memory_function = self.get_memory_function(memory_store.memory_type)
-        return self.memory_manager.append_memory(
+        self.set_tracking_function("memory:append")
+        result = self.memory_manager.append_memory(
             memory_store, user_input, llm_response, memory_function, agent
         )
+        self.set_tracking_function("Not Set")
+        return result
 
     def get_memory_function(self, memory_type):
         return MemoryFunction.get(MemoryFunction.memory_type == memory_type)
@@ -443,14 +458,23 @@ class ChatSystem:
             return None
         memory_store = MemoryStore.get(MemoryStore.name == memory_store)
         memory_function = self.get_memory_function(memory_store.memory_type)
-        return self.memory_manager.compress_memories(
+        self.set_tracking_function("memory:compress")
+        result = self.memory_manager.compress_memories(
             memory_store, grouped_memories, memory_function, chat_agent
         )
+        self.set_tracking_function("Not Set")
+        return result
 
     def compress_knowledge(self, knowledge_store, grouped_documents, chat_agent):
         if knowledge_store is None or grouped_documents is None:
             return None
         knowledge_store = KnowledgeStore.get(KnowledgeStore.name == knowledge_store)
-        return self.knowledge_manager.compress_knowledge(
+        self.set_tracking_function("knowledge:compress")
+        result = self.knowledge_manager.compress_knowledge(
             knowledge_store, grouped_documents, chat_agent
         )
+        self.set_tracking_function("Not Set")
+        return result
+
+    def get_tracking_usage(self):
+        return self.tracking_manager.get_tracking_usage()
