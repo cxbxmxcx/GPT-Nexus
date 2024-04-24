@@ -154,6 +154,7 @@ class Document(BaseModel):
     name = CharField()
 
 
+
 class ThoughtTemplate(BaseModel):
     name = CharField(unique=True)
     description = TextField(null=True)
@@ -235,10 +236,12 @@ def initialize_db():
             summarization_prompt="Given a list of events described below, synthesize these into a concise narrative that captures their essence, emotional significance, and any common themes. Focus on the underlying feelings, lessons learned, or how these events collectively shape my understanding of a particular aspect of a problem. Please merge similar events and emphasize unique insights or moments of growth. The aim is to create a compact, meaningful representation of these experiences that reflects their impact on me rather than a detailed account of each event",
         )
 
+
     if not ThoughtTemplate.select().where(ThoughtTemplate.name == "reasoning").exists():
         ThoughtTemplate.create(
             name="reasoning",
             content=textwrap.dedent("""
+
             inputs:
                 type: prompt
                 input:
@@ -261,6 +264,7 @@ def initialize_db():
         ThoughtTemplate.create(
             name="evaluation",
             content=textwrap.dedent("""
+
             inputs:
                 type: prompt
                 input:
@@ -294,6 +298,7 @@ def initialize_db():
                     reasoning: {{>reasoning input}}
 
             outputs:
+
                 type: prompt
                 input:
                     string

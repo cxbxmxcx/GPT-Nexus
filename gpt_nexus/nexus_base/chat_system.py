@@ -27,6 +27,7 @@ from gpt_nexus.nexus_base.thought_template_manager import ThoughtTemplateManager
 from gpt_nexus.nexus_base.tracking_manager import TrackingManager
 
 
+
 class ChatSystem:
     def __init__(self):
         self.tracking_manager = TrackingManager()
@@ -50,6 +51,7 @@ class ChatSystem:
 
     def set_tracking_function(self, tracking_function):
         tracking_function_context.set(tracking_function)
+
 
     def load_profiles(self):
         profiles = self.profile_manager.agent_profiles
