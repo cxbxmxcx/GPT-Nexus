@@ -154,8 +154,10 @@ class Document(BaseModel):
     name = CharField()
 
 
-class PromptTemplate(BaseModel):
+class ThoughtTemplate(BaseModel):
     name = CharField(unique=True)
+    description = TextField(null=True)
+    args = TextField(null=True)
     content = TextField()
 
 
@@ -171,7 +173,7 @@ def initialize_db():
             Notification,
             KnowledgeStore,
             Document,
-            PromptTemplate,
+            ThoughtTemplate,
             MemoryStore,
             MemoryFunction,
         ],
@@ -233,8 +235,8 @@ def initialize_db():
             summarization_prompt="Given a list of events described below, synthesize these into a concise narrative that captures their essence, emotional significance, and any common themes. Focus on the underlying feelings, lessons learned, or how these events collectively shape my understanding of a particular aspect of a problem. Please merge similar events and emphasize unique insights or moments of growth. The aim is to create a compact, meaningful representation of these experiences that reflects their impact on me rather than a detailed account of each event",
         )
 
-    if not PromptTemplate.select().where(PromptTemplate.name == "reasoning").exists():
-        PromptTemplate.create(
+    if not ThoughtTemplate.select().where(ThoughtTemplate.name == "reasoning").exists():
+        ThoughtTemplate.create(
             name="reasoning",
             content=textwrap.dedent("""
             inputs:
@@ -251,8 +253,12 @@ def initialize_db():
             """),
         )
 
-    if not PromptTemplate.select().where(PromptTemplate.name == "evaluation").exists():
-        PromptTemplate.create(
+    if (
+        not ThoughtTemplate.select()
+        .where(ThoughtTemplate.name == "evaluation")
+        .exists()
+    ):
+        ThoughtTemplate.create(
             name="evaluation",
             content=textwrap.dedent("""
             inputs:
@@ -271,11 +277,11 @@ def initialize_db():
         )
 
     if (
-        not PromptTemplate.select()
-        .where(PromptTemplate.name == "reasoning_evaluation")
+        not ThoughtTemplate.select()
+        .where(ThoughtTemplate.name == "reasoning_evaluation")
         .exists()
     ):
-        PromptTemplate.create(
+        ThoughtTemplate.create(
             name="reasoning_evaluation",
             content=textwrap.dedent("""
             inputs:
@@ -300,11 +306,11 @@ def initialize_db():
         )
 
     if (
-        not PromptTemplate.select()
-        .where(PromptTemplate.name == "memory_augmentation")
+        not ThoughtTemplate.select()
+        .where(ThoughtTemplate.name == "memory_augmentation")
         .exists()
     ):
-        PromptTemplate.create(
+        ThoughtTemplate.create(
             name="memory_augmentation",
             content=textwrap.dedent("""
             inputs:
@@ -324,11 +330,11 @@ def initialize_db():
         )
 
     if (
-        not PromptTemplate.select()
-        .where(PromptTemplate.name == "knowledge_augmentation")
+        not ThoughtTemplate.select()
+        .where(ThoughtTemplate.name == "knowledge_augmentation")
         .exists()
     ):
-        PromptTemplate.create(
+        ThoughtTemplate.create(
             name="knowledge_augmentation",
             content=textwrap.dedent("""
             inputs:
@@ -348,11 +354,11 @@ def initialize_db():
         )
 
     if (
-        not PromptTemplate.select()
-        .where(PromptTemplate.name == "basic_planner")
+        not ThoughtTemplate.select()
+        .where(ThoughtTemplate.name == "basic_planner")
         .exists()
     ):
-        PromptTemplate.create(
+        ThoughtTemplate.create(
             name="basic_planner",
             content=textwrap.dedent("""
             inputs:

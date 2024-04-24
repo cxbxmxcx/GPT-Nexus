@@ -1,8 +1,8 @@
 import pytest
 
-from gpt_nexus.nexus_base.chat_models import PromptTemplate
+from gpt_nexus.nexus_base.chat_models import ThoughtTemplate
 from gpt_nexus.nexus_base.chat_system import ChatSystem
-from gpt_nexus.nexus_base.prompt_template_manager import PromptTemplateManager
+from gpt_nexus.nexus_base.thought_template_manager import ThoughtTemplateManager
 
 
 @pytest.fixture
@@ -12,9 +12,9 @@ def nexus():
 
 
 @pytest.fixture
-def prompt_template_manager(nexus):
+def thought_template_manager(nexus):
     # Create an instance of PromptTemplateManager for testing
-    return PromptTemplateManager(nexus)
+    return ThoughtTemplateManager(nexus)
 
 
 @pytest.fixture
@@ -28,7 +28,7 @@ def agent(nexus):
     return nexus.get_agent(agent_name)
 
 
-def test_execute_simple_input_template(prompt_template_manager, agent):
+def test_execute_simple_input_template(thought_template_manager, agent):
     # Define the test inputs
     content = """        
         inputs:
@@ -41,7 +41,7 @@ def test_execute_simple_input_template(prompt_template_manager, agent):
     inputs = {"name": "John"}
 
     # Call the execute_template function
-    iprompt, iresult, oprompt, oresult = prompt_template_manager.execute_template(
+    iprompt, iresult, oprompt, oresult = thought_template_manager.execute_template(
         agent, content, inputs, outputs={}, partial_execution=False
     )
 
@@ -52,7 +52,7 @@ def test_execute_simple_input_template(prompt_template_manager, agent):
     assert oresult is None
 
 
-def test_bad_yaml_input_template(prompt_template_manager, agent):
+def test_bad_yaml_input_template(thought_template_manager, agent):
     # Define the test inputs
     content = """
     inputs: -
@@ -68,7 +68,7 @@ def test_bad_yaml_input_template(prompt_template_manager, agent):
     # Call the execute_template function
     exception = True
     try:
-        iprompt, iresult, oprompt, oresult = prompt_template_manager.execute_template(
+        iprompt, iresult, oprompt, oresult = thought_template_manager.execute_template(
             agent, content, inputs, outputs={}, partial_execution=False
         )
         exception = False
@@ -78,7 +78,7 @@ def test_bad_yaml_input_template(prompt_template_manager, agent):
     assert exception
 
 
-def test_bad_yaml_output_template(prompt_template_manager, agent):
+def test_bad_yaml_output_template(thought_template_manager, agent):
     # Define the test inputs
     content = """
     outputs: -
@@ -91,7 +91,7 @@ def test_bad_yaml_output_template(prompt_template_manager, agent):
     # Call the execute_template function
     exception = True
     try:
-        iprompt, iresult, oprompt, oresult = prompt_template_manager.execute_template(
+        iprompt, iresult, oprompt, oresult = thought_template_manager.execute_template(
             agent, content, inputs, outputs={}, partial_execution=False
         )
         exception = False
@@ -101,7 +101,7 @@ def test_bad_yaml_output_template(prompt_template_manager, agent):
     assert exception
 
 
-def test_bad_template_content(prompt_template_manager, agent):
+def test_bad_template_content(thought_template_manager, agent):
     # Define the test inputs
     content = """
     inputs:
@@ -116,7 +116,7 @@ def test_bad_template_content(prompt_template_manager, agent):
     # Call the execute_template function
     exception = True
     try:
-        iprompt, iresult, oprompt, oresult = prompt_template_manager.execute_template(
+        iprompt, iresult, oprompt, oresult = thought_template_manager.execute_template(
             agent, content, inputs, outputs={}, partial_execution=False
         )
         exception = False
@@ -126,22 +126,22 @@ def test_bad_template_content(prompt_template_manager, agent):
     assert exception
 
 
-def test_get_prompt_template_with_monkeypatch(nexus, monkeypatch):
-    # Function to replace get_prompt_template
-    def mock_get_prompt_template():
+def test_get_thought_template_with_monkeypatch(nexus, monkeypatch):
+    # Function to replace get_thought_template
+    def mock_get_thought_template():
         return "Your mock template"
 
     # Use monkeypatch to replace the real function with your mock
-    monkeypatch.setattr(nexus, "get_prompt_template", mock_get_prompt_template)
+    monkeypatch.setattr(nexus, "get_thought_template", mock_get_thought_template)
 
     # Now calling nexus.get_prompt_template() will use the mock function
-    result = nexus.get_prompt_template()
+    result = nexus.get_thought_template()
     assert result == "Your mock template"
 
 
-def test_execute_partial_input_template(prompt_template_manager, agent, monkeypatch):
+def test_execute_partial_input_template(thought_template_manager, agent, monkeypatch):
     # Define the test inputs
-    def mock_get_prompt_template(self):
+    def mock_get_thought_template(self):
         content = """        
         inputs:
             type: function
@@ -150,13 +150,13 @@ def test_execute_partial_input_template(prompt_template_manager, agent, monkeypa
             template: |
                 {{name}} - {{name}}
         """
-        return PromptTemplate(
+        return ThoughtTemplate(
             content=content, inputs={}, outputs={}, name="partial_test"
         )
 
     # Use monkeypatch to replace the real function with your mock
     monkeypatch.setattr(
-        prompt_template_manager, "get_prompt_template", mock_get_prompt_template
+        thought_template_manager, "get_thought_template", mock_get_thought_template
     )
     content = """        
         inputs:
@@ -168,7 +168,7 @@ def test_execute_partial_input_template(prompt_template_manager, agent, monkeypa
     inputs = {"name": "John"}
 
     # Call the execute_template function
-    iprompt, iresult, oprompt, oresult = prompt_template_manager.execute_template(
+    iprompt, iresult, oprompt, oresult = thought_template_manager.execute_template(
         agent, content, inputs, outputs={}, partial_execution=False
     )
 
@@ -179,7 +179,7 @@ def test_execute_partial_input_template(prompt_template_manager, agent, monkeypa
     assert oresult is None
 
 
-def test_execute_template(prompt_template_manager, agent):
+def test_execute_template(thought_template_manager, agent):
     # Define the test inputs
     content = """        
         inputs:
@@ -197,7 +197,7 @@ def test_execute_template(prompt_template_manager, agent):
     inputs = {"name": "John"}
 
     # Call the execute_template function
-    iprompt, iresult, oprompt, oresult = prompt_template_manager.execute_template(
+    iprompt, iresult, oprompt, oresult = thought_template_manager.execute_template(
         agent, content, inputs, outputs={}, partial_execution=False
     )
 
@@ -207,7 +207,7 @@ def test_execute_template(prompt_template_manager, agent):
     assert oresult is not None
 
 
-def test_helper_template(prompt_template_manager, agent):
+def test_helper_template(thought_template_manager, agent):
     content = """        
         inputs:
             input:
@@ -221,7 +221,7 @@ def test_helper_template(prompt_template_manager, agent):
     """
     inputs = {"input": "hello"}
     # Call the execute_template function
-    iprompt, iresult, oprompt, oresult = prompt_template_manager.execute_template(
+    iprompt, iresult, oprompt, oresult = thought_template_manager.execute_template(
         agent, content, inputs, outputs={}, partial_execution=False
     )
 
@@ -229,7 +229,7 @@ def test_helper_template(prompt_template_manager, agent):
     assert iresult == "HELLO\n"
 
 
-def test_template_multiple_args(prompt_template_manager, agent):
+def test_template_multiple_args(thought_template_manager, agent):
     content = """        
         inputs:
             type: function
@@ -242,7 +242,7 @@ def test_template_multiple_args(prompt_template_manager, agent):
     """
     inputs = {"input": "hello", "name": "world"}
     # Call the execute_template function
-    iprompt, iresult, oprompt, oresult = prompt_template_manager.execute_template(
+    iprompt, iresult, oprompt, oresult = thought_template_manager.execute_template(
         agent, content, inputs, outputs={}, partial_execution=False
     )
 
@@ -250,7 +250,7 @@ def test_template_multiple_args(prompt_template_manager, agent):
     assert iresult.startswith("hello   world")
 
 
-def test_helper_template_multiple_args(prompt_template_manager, agent):
+def test_helper_template_multiple_args(thought_template_manager, agent):
     content = """        
         inputs:
             input:
@@ -266,7 +266,7 @@ def test_helper_template_multiple_args(prompt_template_manager, agent):
     """
     inputs = {"input": "hello", "name": "world"}
     # Call the execute_template function
-    iprompt, iresult, oprompt, oresult = prompt_template_manager.execute_template(
+    iprompt, iresult, oprompt, oresult = thought_template_manager.execute_template(
         agent, content, inputs, outputs={}, partial_execution=False
     )
 
@@ -276,7 +276,7 @@ def test_helper_template_multiple_args(prompt_template_manager, agent):
     # Add more test cases as needed
 
 
-def test_input_output_prompts(prompt_template_manager, agent):
+def test_input_output_thoughts(thought_template_manager, agent):
     content = """        
         inputs:
             type: prompt
@@ -297,7 +297,7 @@ def test_input_output_prompts(prompt_template_manager, agent):
     """
     inputs = {"input": "hello", "name": "world"}
     # Call the execute_template function
-    iprompt, iresult, oprompt, oresult = prompt_template_manager.execute_template(
+    iprompt, iresult, oprompt, oresult = thought_template_manager.execute_template(
         agent, content, inputs, outputs={}, partial_execution=False
     )
 
@@ -307,9 +307,9 @@ def test_input_output_prompts(prompt_template_manager, agent):
     assert oresult is not None
 
 
-def test_reasoning_evaluation_partials(prompt_template_manager, agent, monkeypatch):
+def test_reasoning_evaluation_partials(thought_template_manager, agent, monkeypatch):
     # Define the test inputs
-    def mock_get_prompt_template(arg):
+    def mock_get_thought_template(arg):
         if arg == "reasoning":
             content = """        
             inputs:
@@ -340,13 +340,13 @@ def test_reasoning_evaluation_partials(prompt_template_manager, agent, monkeypat
                     was solved and return a score 0.0 to 1.0.
                     """
 
-        return PromptTemplate(
+        return ThoughtTemplate(
             content=content, inputs={}, outputs={}, name="partial_test"
         )
 
     # Use monkeypatch to replace the real function with your mock
     monkeypatch.setattr(
-        prompt_template_manager, "get_prompt_template", mock_get_prompt_template
+        thought_template_manager, "get_thought_template", mock_get_thought_template
     )
     content = """        
         inputs:
@@ -369,7 +369,7 @@ def test_reasoning_evaluation_partials(prompt_template_manager, agent, monkeypat
     inputs = {"input": "who would win a peck off, a rooster or a tiger?"}
 
     # Call the execute_template function
-    iprompt, iresult, oprompt, oresult = prompt_template_manager.execute_template(
+    iprompt, iresult, oprompt, oresult = thought_template_manager.execute_template(
         agent, content, inputs, outputs={}, partial_execution=False
     )
 
@@ -382,7 +382,7 @@ def test_reasoning_evaluation_partials(prompt_template_manager, agent, monkeypat
     assert oresult is not None
 
 
-def test_helper_agent_functions(prompt_template_manager, agent):
+def test_helper_agent_functions(thought_template_manager, agent):
     content = """        
         inputs:
             type: function            
@@ -400,7 +400,7 @@ def test_helper_agent_functions(prompt_template_manager, agent):
     inputs = {}
     agent.memory_store = "my_memory"
     # Call the execute_template function
-    iprompt, iresult, oprompt, oresult = prompt_template_manager.execute_template(
+    iprompt, iresult, oprompt, oresult = thought_template_manager.execute_template(
         agent, content, inputs, outputs={}, partial_execution=False
     )
 
@@ -410,7 +410,7 @@ def test_helper_agent_functions(prompt_template_manager, agent):
     assert oresult is None
 
 
-def test_helper_nexus_functions(prompt_template_manager, agent):
+def test_helper_nexus_functions(thought_template_manager, agent):
     content = """        
         inputs:
             type: function 
@@ -431,7 +431,7 @@ def test_helper_nexus_functions(prompt_template_manager, agent):
     inputs = {"agent": "GroqAgent"}
 
     # Call the execute_template function
-    iprompt, iresult, oprompt, oresult = prompt_template_manager.execute_template(
+    iprompt, iresult, oprompt, oresult = thought_template_manager.execute_template(
         agent, content, inputs, outputs={}, partial_execution=False
     )
 
@@ -441,7 +441,7 @@ def test_helper_nexus_functions(prompt_template_manager, agent):
     assert oresult is None
 
 
-def test_basic_planning_prompt(prompt_template_manager, agent):
+def test_basic_planning_thought(thought_template_manager, agent):
     content = """
 inputs:
     type: prompt
@@ -565,7 +565,7 @@ helpers:
     """
     inputs = {"input": "hello"}
     # Call the execute_template function
-    iprompt, iresult, oprompt, oresult = prompt_template_manager.execute_template(
+    iprompt, iresult, oprompt, oresult = thought_template_manager.execute_template(
         agent, content, inputs, outputs={}, partial_execution=False
     )
 

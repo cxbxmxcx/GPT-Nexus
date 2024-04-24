@@ -1,7 +1,7 @@
 import yaml
 from lark import Lark, Token, Transformer, Tree, v_args
 
-from gpt_nexus.nexus_base.chat_models import PromptTemplate, db
+from gpt_nexus.nexus_base.chat_models import ThoughtTemplate, db
 from gpt_nexus.nexus_base.context_variables import tracking_function_context
 
 
@@ -63,7 +63,7 @@ class TemplateTransformer(Transformer):
                 if earg:
                     args[arg] = earg
 
-        partial_template = self.manager.get_prompt_template(name)
+        partial_template = self.manager.get_thought_template(name)
 
         if partial_template:
             append_tracking_context(f"partial:{name}")
@@ -146,7 +146,7 @@ class TemplateTransformer(Transformer):
             return str(item)
 
 
-class PromptTemplateManager:
+class ThoughtTemplateManager:
     def __init__(self, nexus):
         self.nexus = nexus
         self.parser = self.init_template_parser()
@@ -194,42 +194,44 @@ class PromptTemplateManager:
             parser="lalr",
         )
 
-    def add_prompt_template(self, template_name, template_content):
+    def add_thought_template(self, template_name, template_content):
         with db.atomic():
             if (
-                PromptTemplate.select()
-                .where(PromptTemplate.name == template_name)
+                ThoughtTemplate.select()
+                .where(ThoughtTemplate.name == template_name)
                 .exists()
             ):
                 raise ValueError("Template name already exists")
-            PromptTemplate.create(
+            ThoughtTemplate.create(
                 name=template_name,
                 content=template_content,
             )
-            print(f"Prompt template '{template_name}' added.")
+            print(f"Thought template '{template_name}' added.")
             return True
 
-    def get_prompt_template(self, template_name):
+    def get_thought_template(self, template_name):
         try:
-            return PromptTemplate.get(PromptTemplate.name == template_name)
-        except PromptTemplate.DoesNotExist:
+            return ThoughtTemplate.get(ThoughtTemplate.name == template_name)
+        except ThoughtTemplate.DoesNotExist:
             return None
 
-    def update_prompt_template(self, template_name, template_content):
+    def update_thought_template(self, template_name, template_content):
         with db.atomic():
-            template = PromptTemplate.get(PromptTemplate.name == template_name)
+            template = ThoughtTemplate.get(ThoughtTemplate.name == template_name)
             template.content = template_content
             template.save()
-            print(f"Prompt template '{template_name}' updated.")
+            print(f"Thought template '{template_name}' updated.")
             return True
 
-    def delete_prompt_template(self, template_name):
+    def delete_thought_template(self, template_name):
         with db.atomic():
-            query = PromptTemplate.delete().where(PromptTemplate.name == template_name)
+            query = ThoughtTemplate.delete().where(
+                ThoughtTemplate.name == template_name
+            )
             return query.execute()
 
-    def get_prompt_template_names(self):
-        return [template.name for template in PromptTemplate.select()]
+    def get_thought_template_names(self):
+        return [template.name for template in ThoughtTemplate.select()]
 
     def _extract_set_variables(self, template_data, invars):
         variables = {}
@@ -259,7 +261,7 @@ class PromptTemplateManager:
             )
         return template_data
 
-    def get_prompt_template_inputs_outputs(self, template_content):
+    def get_thought_template_inputs_outputs(self, template_content):
         template_data = self.load_template_data(template_content)
 
         tinputs = template_data.get("inputs", {})

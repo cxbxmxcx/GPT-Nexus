@@ -23,7 +23,7 @@ from gpt_nexus.nexus_base.context_variables import (
 from gpt_nexus.nexus_base.knowledge_manager import KnowledgeManager
 from gpt_nexus.nexus_base.memory_manager import MemoryManager
 from gpt_nexus.nexus_base.profile_manager import ProfileManager
-from gpt_nexus.nexus_base.prompt_template_manager import PromptTemplateManager
+from gpt_nexus.nexus_base.thought_template_manager import ThoughtTemplateManager
 from gpt_nexus.nexus_base.tracking_manager import TrackingManager
 
 
@@ -43,7 +43,7 @@ class ChatSystem:
         self.knowledge_manager = KnowledgeManager()
         self.memory_manager = MemoryManager()
 
-        self.prompt_template_manager = PromptTemplateManager(self)
+        self.thought_template_manager = ThoughtTemplateManager(self)
 
     def set_tracking_id(self, tracking_id):
         tracking_id_context.set(tracking_id)
@@ -253,35 +253,35 @@ class ChatSystem:
         else:
             print("Username not found.")
 
-    def add_prompt_template(self, template_name, template_content):
-        return self.prompt_template_manager.add_prompt_template(
+    def add_thought_template(self, template_name, template_content):
+        return self.thought_template_manager.add_thought_template(
             template_name, template_content
         )
 
-    def get_prompt_template(self, template_name):
-        return self.prompt_template_manager.get_prompt_template(template_name)
+    def get_thought_template(self, template_name):
+        return self.thought_template_manager.get_thought_template(template_name)
 
-    def get_prompt_template_inputs_outputs(self, template_content):
-        return self.prompt_template_manager.get_prompt_template_inputs_outputs(
+    def get_thought_template_inputs_outputs(self, template_content):
+        return self.thought_template_manager.get_thought_template_inputs_outputs(
             template_content
         )
 
-    def update_prompt_template(self, template_name, template_content):
-        return self.prompt_template_manager.update_prompt_template(
+    def update_thought_template(self, template_name, template_content):
+        return self.thought_template_manager.update_thought_template(
             template_name, template_content
         )
 
-    def delete_prompt_template(self, template_name):
-        return self.prompt_template_manager.delete_prompt_template(template_name)
+    def delete_thought_template(self, template_name):
+        return self.thought_template_manager.delete_thought_template(template_name)
 
-    def get_prompt_template_names(self):
-        return self.prompt_template_manager.get_prompt_template_names()
+    def get_thought_template_names(self):
+        return self.thought_template_manager.get_thought_template_names()
 
     def execute_template(self, name, agent, content, inputs, outputs):
         id = self.tracking_manager.get_next_id()
         self.set_tracking_id(f"exec_template:{name}:{id}")
         self.set_tracking_function(f"template:{name}")
-        result = self.prompt_template_manager.execute_template(
+        result = self.thought_template_manager.execute_template(
             agent, content, inputs, outputs
         )
         self.set_tracking_id("Not Set")

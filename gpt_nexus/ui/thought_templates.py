@@ -10,7 +10,7 @@ from gpt_nexus.ui.cache import get_chat_system
 from gpt_nexus.ui.options import create_editor_options_ui
 
 
-def prompts_page(username):
+def thought_templates_page(username):
     chat = get_chat_system()
     user = chat.get_participant(username)
     if user is None:
@@ -21,9 +21,9 @@ def prompts_page(username):
         agent = agent_panel(chat)
 
     # UI for the app
-    st.header("Prompt Function Template Manager")
-    prompt_names = chat.get_prompt_template_names()
-    template_names = ["Create New Template"] + sorted(prompt_names)
+    st.header("Thought Template Manager")
+    thought_names = chat.get_thought_template_names()
+    template_names = ["Create New Template"] + sorted(thought_names)
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
     editor_commands_path = os.path.join(current_dir, "editor_commands.json")
@@ -42,7 +42,7 @@ def prompts_page(username):
     )
 
     with config_tabs[0]:
-        st.subheader("Write and Edit Prompt Templates")
+        st.subheader("Write and Edit Thought Templates")
         selected_template_name = st.selectbox("Select a template", template_names)
         if selected_template_name == "Create New Template":
             new_name = st.text_input("Template Name").strip()
@@ -62,11 +62,11 @@ def prompts_page(username):
                 if response_dict["type"] == "saved":
                     try:
                         # Save the new template
-                        chat.add_prompt_template(
+                        chat.add_thought_template(
                             new_name,
                             new_content,
                         )
-                        st.success(f"Prompt Template '{new_name}' added!")
+                        st.success(f"Thought Template '{new_name}' added!")
                         st.rerun()
                     except Exception as e:
                         st.error(f"An error occurred: {e}")
@@ -74,7 +74,7 @@ def prompts_page(username):
 
         elif selected_template_name:
             # Load and display the selected template for editing
-            selected_template = chat.get_prompt_template(selected_template_name)
+            selected_template = chat.get_thought_template(selected_template_name)
             edited_name = st.text_input("Template Name", value=selected_template_name)
             height, language, theme, shortcuts, focus = create_editor_options_ui()
             response_dict = code_editor(
@@ -92,17 +92,17 @@ def prompts_page(username):
             with col1:
                 if edited_content and response_dict["type"] == "saved":
                     # Update the template with new values
-                    chat.update_prompt_template(
+                    chat.update_thought_template(
                         edited_name,
                         edited_content,
                     )
                     if edited_name != selected_template_name:
                         # If the name was edited, delete the old entry after saving the new one
-                        chat.delete_prompt_template(selected_template_name)
+                        chat.delete_thought_template(selected_template_name)
                     st.success(f"Template '{edited_name}' updated!")
             with col2:
                 if st.button("Delete Template") or response_dict["type"] == "delete":
-                    chat.delete_prompt_template(selected_template_name)
+                    chat.delete_thought_template(selected_template_name)
                     st.success(f"Template '{selected_template_name}' deleted!")
                     st.rerun()
 
@@ -136,7 +136,7 @@ def prompts_page(username):
         if selected_template_name == "Create New Template":
             st.write("Create and save a template before testing it.")
             return
-        st.subheader("Test Prompt Templates")
+        st.subheader("Test Thought Templates")
         # Use the current content and inputs from the left column for testing
         current_content = (
             new_content
@@ -145,7 +145,7 @@ def prompts_page(username):
         )
 
         if current_content:
-            current_inputs, current_outputs = chat.get_prompt_template_inputs_outputs(
+            current_inputs, current_outputs = chat.get_thought_template_inputs_outputs(
                 current_content
             )
             inputs = {}
@@ -155,7 +155,7 @@ def prompts_page(username):
                     inputs[field] = st.text_input(f"Value for {field}", key=field)
 
             if st.button("Run Test", key="test"):
-                with st.spinner(text="Executing prompt/function by Agent..."):
+                with st.spinner(text="Executing Thought - prompt/function by Agent..."):
                     iprompt, iresult, oprompt, oresult = chat.execute_template(
                         selected_template_name,
                         agent,
@@ -178,4 +178,4 @@ def prompts_page(username):
                         st.write(oresult)
 
     with config_tabs[2]:
-        st.subheader("Examine Documents in Knowledge Store")
+        st.subheader("Execute Thought Templates")
