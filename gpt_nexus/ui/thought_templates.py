@@ -28,6 +28,9 @@ def thought_templates_page(username):
     current_dir = os.path.dirname(os.path.abspath(__file__))
     editor_commands_path = os.path.join(current_dir, "editor_commands.json")
 
+    if "active_tab" not in st.session_state:
+        st.session_state.active_tab = 0
+
     with open(editor_commands_path) as json_info_file:
         btns = json.load(json_info_file)
 
@@ -90,16 +93,20 @@ def thought_templates_page(username):
 
             col1, col2 = st.columns([1, 1])
             with col1:
-                if edited_content and response_dict["type"] == "saved":
-                    # Update the template with new values
-                    chat.update_thought_template(
-                        edited_name,
-                        edited_content,
-                    )
-                    if edited_name != selected_template_name:
-                        # If the name was edited, delete the old entry after saving the new one
-                        chat.delete_thought_template(selected_template_name)
-                    st.success(f"Template '{edited_name}' updated!")
+                if edited_content:
+                    if response_dict["type"] == "saved":
+                        # Update the template with new values
+                        chat.update_thought_template(
+                            edited_name,
+                            edited_content,
+                        )
+                        if edited_name != selected_template_name:
+                            # If the name was edited, delete the old entry after saving the new one
+                            chat.delete_thought_template(selected_template_name)
+                        st.success(f"Template '{edited_name}' updated!")
+                    elif response_dict["type"] == "submit":
+                        st.session_state.active_tab = 1
+
             with col2:
                 if st.button("Delete Template") or response_dict["type"] == "delete":
                     chat.delete_thought_template(selected_template_name)
