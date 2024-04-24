@@ -65,14 +65,7 @@ class AnthropicAgent(BaseAgent):
         )
 
     async def get_response(self, user_input, thread_id=None):
-        self.messages += [{"role": "user", "content": user_input}]
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=self.messages,
-            temperature=0.7,
-        )
-        self.last_message = str(response)
-        return str(response)
+        return None
 
     def get_semantic_response(self, system, user):
         messages = [

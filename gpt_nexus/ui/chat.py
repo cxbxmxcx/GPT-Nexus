@@ -100,6 +100,9 @@ def chat_page(username):
 
                         with st.chat_message(chat_agent.name, avatar=chat_avatar):
                             with st.spinner(text="The agent is thinking..."):
+                                chat.set_tracking_id(
+                                    f"chat:thread{current_thread.thread_id}:{username}"
+                                )
                                 knowledge_rag = chat.apply_knowledge_RAG(
                                     chat_agent.knowledge_store, user_input
                                 )
@@ -119,6 +122,7 @@ def chat_page(username):
                                     chat_agent.last_message,
                                     chat_agent,
                                 )
+                            chat.set_tracking_id("Not set")
                             chat.post_message(
                                 current_thread.thread_id,
                                 chat_agent.name,
