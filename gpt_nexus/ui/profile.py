@@ -1,6 +1,6 @@
 import streamlit as st
 
-from gpt_nexus.ui.cache import get_chat_system
+from gpt_nexus.ui.cache import get_nexus
 
 # def display_profile(profile):
 #     # Use columns to organize the layout
@@ -43,8 +43,8 @@ from gpt_nexus.ui.cache import get_chat_system
 #     profile.feedback = st.text_area("Feedback (JSON structure)", "Not implemented")
 
 
-def profile_page(username):
-    chat = get_chat_system()
+def profile_page(username, win_height):
+    chat = get_nexus()
     user = chat.get_participant(username)
     if user is None:
         st.error("Invalid user")

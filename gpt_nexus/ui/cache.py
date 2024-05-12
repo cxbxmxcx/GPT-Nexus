@@ -1,7 +1,8 @@
 import streamlit as st
-from nexus_base.chat_system import ChatSystem
+
+from gpt_nexus.nexus_base.nexus import Nexus
 
 
 @st.cache_resource
-def get_chat_system():
-    return ChatSystem()
+def get_nexus():
+    return Nexus()

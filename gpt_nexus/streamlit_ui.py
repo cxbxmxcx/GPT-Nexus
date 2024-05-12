@@ -1,7 +1,9 @@
+import time
+
 import streamlit as st
+from streamlit_js_eval import set_cookie
+from streamlit_js_eval import streamlit_js_eval as st_js
 from ui.actions import actions_page
-from ui.agent import agent_page
-from ui.chat import chat_page
 from ui.knowledge import knowledge_page
 from ui.login import login_page
 from ui.memory import memory_page
@@ -10,9 +12,14 @@ from ui.thought_templates import thought_templates_page
 from ui.usage import usage_page
 from ui.workflow import workflow_page
 
+from gpt_nexus.ui.agent_chat import chat_page
+from gpt_nexus.ui.assistants_chat import assistants_page
+
 
 def main():
     st.set_page_config(page_title="GPT Nexus", page_icon="icon.png", layout="wide")
+
+    win_height = st_js(js_expressions="top.innerHeight", key="SCR")
     if "log_messages" not in st.session_state:
         st.session_state.log_messages = ""
 
@@ -22,7 +29,8 @@ def main():
         selected_page = st.sidebar.selectbox(
             "GPT Nexus",
             [
-                "Chat Playground",
+                "Agents Chat Playground",
+                "Assistants Chat Playground",
                 "Actions",
                 "Knowledge",
                 "Memory",
@@ -31,40 +39,50 @@ def main():
                 "Thought Templates",
                 "Thought Trees",
                 "Thought Networks",
+                "Logout",
             ],
         )
-        if selected_page == "Agents":
-            agent_page(username)
+        # if selected_page == "Agents":
+        #     agent_page(username, win_height)
+        #     return
+        if selected_page == "Agents Chat Playground":
+            chat_page(username, win_height)
             return
-        elif selected_page == "Chat Playground":
-            chat_page(username)
+        elif selected_page == "Assistants Chat Playground":
+            assistants_page(username, win_height)
             return
         elif selected_page == "Knowledge":
-            knowledge_page(username)
+            knowledge_page(username, win_height)
             return
         elif selected_page == "Memory":
-            memory_page(username)
+            memory_page(username, win_height)
             return
         elif selected_page == "Workflow":
-            workflow_page(username)
+            workflow_page(username, win_height)
             return
         elif selected_page == "Profile":
-            profile_page(username)
+            profile_page(username, win_height)
             return
         elif selected_page == "Usage":
-            usage_page(username)
+            usage_page(username, win_height)
             return
         elif selected_page == "Actions":
-            actions_page(username)
+            actions_page(username, win_height)
             return
         elif selected_page == "Thought Templates":
-            thought_templates_page(username)
+            thought_templates_page(username, win_height)
             return
         elif selected_page == "Thought Trees":
-            thought_templates_page(username)
+            thought_templates_page(username, win_height)
             return
         elif selected_page == "Thought Networks":
-            thought_templates_page(username)
+            thought_templates_page(username, win_height)
+            return
+        elif selected_page == "Logout":
+            st.session_state["username"] = None
+            set_cookie("username", "", 0)
+            time.sleep(5)
+            st.rerun()
             return
 
     else:

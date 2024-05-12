@@ -1,12 +1,12 @@
 import pytest
 
-from gpt_nexus.nexus_base.chat_system import ChatSystem
+from gpt_nexus.nexus_base.nexus import Nexus
 
 
 @pytest.fixture
 def nexus():
-    # Create an instance of ChatSystem for testing
-    return ChatSystem()
+    # Create an instance of Nexus for testing
+    return Nexus()
 
 
 def test_nexus_get_all_participants(nexus):

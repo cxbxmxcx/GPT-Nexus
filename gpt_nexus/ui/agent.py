@@ -1,6 +1,6 @@
 import streamlit as st
 
-from gpt_nexus.ui.cache import get_chat_system
+from gpt_nexus.ui.cache import get_nexus
 
 
 def save_new_agent(name, agent_type):
@@ -21,8 +21,8 @@ def save_agent_configuration(agent_name, configuration):
     pass
 
 
-def agent_page(username):
-    chat = get_chat_system()
+def agent_page(username, win_height):
+    chat = get_nexus()
     user = chat.get_participant(username)
     if user is None:
         st.error("Invalid user")

@@ -1,7 +1,7 @@
 import streamlit as st
 
-from gpt_nexus.nexus_base.chat_models import MemoryType
-from gpt_nexus.ui.cache import get_chat_system
+from gpt_nexus.nexus_base.nexus_models import MemoryType
+from gpt_nexus.ui.cache import get_nexus
 from gpt_nexus.ui.embeddings import get_agent, view_embeddings
 
 
@@ -19,8 +19,8 @@ def add_memory_to_store(chat, memory_store):
         st.success("Memory added successfully!")
 
 
-def memory_page(username):
-    chat = get_chat_system()
+def memory_page(username, win_height):
+    chat = get_nexus()
     user = chat.get_participant(username)
     if user is None:
         st.error("Invalid user")

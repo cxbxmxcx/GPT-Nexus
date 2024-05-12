@@ -8,8 +8,8 @@ from langchain_text_splitters import (
     RecursiveCharacterTextSplitter,
 )
 
-from gpt_nexus.nexus_base.chat_models import MemoryStore, MemoryType, db
 from gpt_nexus.nexus_base.embedding_manager import EmbeddingManager
+from gpt_nexus.nexus_base.nexus_models import MemoryStore, MemoryType, db
 from gpt_nexus.nexus_base.utils import (
     convert_keys_to_lowercase,
     extract_code,

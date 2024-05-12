@@ -1,14 +1,11 @@
-import time
-
 import streamlit as st
-from streamlit_js_eval import set_cookie
 
 from gpt_nexus.ui.agent_panel import agent_panel
-from gpt_nexus.ui.cache import get_chat_system
+from gpt_nexus.ui.cache import get_nexus
 
 
-def chat_page(username):
-    chat = get_chat_system()
+def chat_page(username, win_height):
+    chat = get_nexus()
     user = chat.get_participant(username)
     if user is None:
         st.error("Invalid user")
@@ -32,16 +29,14 @@ def chat_page(username):
 
     def create_new_thread():
         new_thread_id = (
-            max(int(thread.thread_id) for thread in st.session_state["threads"]) + 1
-            if st.session_state["threads"]
-            else 1
+            len(st.session_state["threads"]) + 1 if st.session_state["threads"] else 1
         )
-        thread = chat.create_thread(f"Chat: {new_thread_id + 1}", username)
+        thread = chat.create_thread(f"Chat: {new_thread_id}", username)
         st.session_state["threads"].insert(0, thread)
-        select_thread(new_thread_id)
+        select_thread(thread.thread_id)
 
-    st.sidebar.title("GPT Nexus -> Chat")
-    with st.sidebar.container(height=1000):
+    st.sidebar.title("GPT Nexus -> Agents")
+    with st.sidebar.container(height=win_height - 300):
         st.button("+ New Chat", on_click=create_new_thread)
         # Sidebar UI for thread management
 
@@ -49,16 +44,6 @@ def chat_page(username):
         for thread in st.session_state["threads"]:
             if st.button(thread.title, key=thread.thread_id):
                 select_thread(thread.thread_id)
-
-    if st.sidebar.button("Logout"):
-        st.session_state["username"] = None
-        set_cookie("username", "", 0)
-        time.sleep(5)
-        st.rerun()
-
-    if st.sidebar.button("Agents"):
-        st.session_state["current_page"] = "agents"
-        st.rerun()
 
     # Main chat UI
     if st.session_state["current_thread_id"] is not None:
@@ -71,7 +56,7 @@ def chat_page(username):
 
                 with col_chat:
                     st.title(current_thread.title)
-                    with st.container(height=800):
+                    with st.container(height=win_height - 300):
                         messages = chat.read_messages(current_thread.thread_id)
                         for message in messages:
                             with st.chat_message(

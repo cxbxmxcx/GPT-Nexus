@@ -1,8 +1,8 @@
 import yaml
 from lark import Lark, Token, Transformer, Tree, v_args
 
-from gpt_nexus.nexus_base.chat_models import ThoughtTemplate, db
 from gpt_nexus.nexus_base.context_variables import tracking_function_context
+from gpt_nexus.nexus_base.nexus_models import ThoughtTemplate, db
 
 
 def append_tracking_context(function):
