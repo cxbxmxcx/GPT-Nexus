@@ -1,0 +1,42 @@
+thought_process:
+  type: tree
+  root: sequence
+
+thoughts:
+  - id: answer_problem
+    type: prompt
+    action: |
+      problem: {{input}}
+      memory: {{>memory_augmentation input}}
+      reasoning: {{>reasoning input}}    
+
+  - id: execute_code
+    type: function
+    action: |      
+      result: {{>code_execution answer_problem}}  
+    
+  - id: evaluate_feedback
+    type: prompt
+    action: |
+      evaluation_feedback: "{{>evaluation input answer_problem}}"
+      feedback: "{{>feedback_evaluation answer_problem}}"
+      execute_code: {{>execute_code answer_problem}}
+    
+  - id: loop_evaluation
+    type: decorator
+    decorator: loop
+    target: evaluate_feedback
+    condition: |
+      until: "{{evaluate_feedback == 'satisfactory'}}"
+
+  - id: summarize_evaluation
+    type: task
+    action: |
+      summary: Summarize the problem-solving effectiveness
+      details: "{{evaluation_feedback}} considering the feedback: {{feedback}}"
+
+sequence:
+  - answer_problem
+  - evaluate_feedback
+  - loop_evaluation
+  - summarize_evaluation

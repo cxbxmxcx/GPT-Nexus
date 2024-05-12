@@ -1,0 +1,16 @@
+thought_process:
+  type: thought
+  root: single
+
+thoughts:
+  - id: reasoning
+    type: prompt
+    action: |
+      Generate a chain of thought reasoning strategy 
+      in order to solve the following problem. 
+      Just output the reasoning steps and avoid coming
+      to any conclusions. Also, be sure to avoid any assumptions
+      and factor in potential unknowns.
+      {{input}}
+
+

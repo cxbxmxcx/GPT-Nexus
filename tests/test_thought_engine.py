@@ -1,8 +1,8 @@
 import pytest
 
-from gpt_nexus.nexus_base.chat_models import PromptTemplate
+from gpt_nexus.nexus_base.chat_models import ThoughtTemplate
 from gpt_nexus.nexus_base.chat_system import ChatSystem
-from gpt_nexus.nexus_base.prompt_template_manager import PromptTemplateManager
+from gpt_nexus.nexus_base.thought_engine import ThoughtEngine
 
 
 @pytest.fixture
@@ -12,9 +12,9 @@ def nexus():
 
 
 @pytest.fixture
-def prompt_template_manager(nexus):
+def thought_engine(nexus):
     # Create an instance of PromptTemplateManager for testing
-    return PromptTemplateManager(nexus)
+    return ThoughtEngine(nexus)
 
 
 @pytest.fixture
@@ -28,7 +28,7 @@ def agent(nexus):
     return nexus.get_agent(agent_name)
 
 
-def test_execute_simple_input_template(prompt_template_manager, agent):
+def test_execute_simple_input_template(thought_engine, agent):
     # Define the test inputs
     content = """        
         inputs:
@@ -36,12 +36,12 @@ def test_execute_simple_input_template(prompt_template_manager, agent):
             name:
                 type: string
             template: |
-                I am {{ name }}, what is your name?
+                I am {{name}}, what is your name?
     """
     inputs = {"name": "John"}
 
     # Call the execute_template function
-    iprompt, iresult, oprompt, oresult = prompt_template_manager.execute_template(
+    iprompt, iresult, oprompt, oresult = thought_engine.execute_template(
         agent, content, inputs, outputs={}, partial_execution=False
     )
 
@@ -52,7 +52,7 @@ def test_execute_simple_input_template(prompt_template_manager, agent):
     assert oresult is None
 
 
-def test_bad_yaml_input_template(prompt_template_manager, agent):
+def test_bad_yaml_input_template(thought_engine, agent):
     # Define the test inputs
     content = """
     inputs: -
@@ -68,7 +68,7 @@ def test_bad_yaml_input_template(prompt_template_manager, agent):
     # Call the execute_template function
     exception = True
     try:
-        iprompt, iresult, oprompt, oresult = prompt_template_manager.execute_template(
+        iprompt, iresult, oprompt, oresult = thought_engine.execute_template(
             agent, content, inputs, outputs={}, partial_execution=False
         )
         exception = False
@@ -78,7 +78,7 @@ def test_bad_yaml_input_template(prompt_template_manager, agent):
     assert exception
 
 
-def test_bad_yaml_output_template(prompt_template_manager, agent):
+def test_bad_yaml_output_template(thought_engine, agent):
     # Define the test inputs
     content = """
     outputs: -
@@ -91,7 +91,7 @@ def test_bad_yaml_output_template(prompt_template_manager, agent):
     # Call the execute_template function
     exception = True
     try:
-        iprompt, iresult, oprompt, oresult = prompt_template_manager.execute_template(
+        iprompt, iresult, oprompt, oresult = thought_engine.execute_template(
             agent, content, inputs, outputs={}, partial_execution=False
         )
         exception = False
@@ -101,7 +101,7 @@ def test_bad_yaml_output_template(prompt_template_manager, agent):
     assert exception
 
 
-def test_bad_template_content(prompt_template_manager, agent):
+def test_bad_template_content(thought_engine, agent):
     # Define the test inputs
     content = """
     inputs:
@@ -109,39 +109,39 @@ def test_bad_template_content(prompt_template_manager, agent):
         name:
             type: string
         template: |
-            I am {{ name }, what is your name?    
+            I am {{name }}, what is your name?    
     """
     inputs = {"name": "John"}
 
     # Call the execute_template function
     exception = True
     try:
-        iprompt, iresult, oprompt, oresult = prompt_template_manager.execute_template(
+        iprompt, iresult, oprompt, oresult = thought_engine.execute_template(
             agent, content, inputs, outputs={}, partial_execution=False
         )
         exception = False
     except Exception as e:
-        assert str(e).startswith("No terminal matches")
+        assert str(e).startswith("Unexpected token")
 
     assert exception
 
 
-def test_get_prompt_template_with_monkeypatch(nexus, monkeypatch):
-    # Function to replace get_prompt_template
-    def mock_get_prompt_template():
+def test_get_thought_template_with_monkeypatch(nexus, monkeypatch):
+    # Function to replace get_thought_template
+    def mock_get_thought_template():
         return "Your mock template"
 
     # Use monkeypatch to replace the real function with your mock
-    monkeypatch.setattr(nexus, "get_prompt_template", mock_get_prompt_template)
+    monkeypatch.setattr(nexus, "get_thought_template", mock_get_thought_template)
 
     # Now calling nexus.get_prompt_template() will use the mock function
-    result = nexus.get_prompt_template()
+    result = nexus.get_thought_template()
     assert result == "Your mock template"
 
 
-def test_execute_partial_input_template(prompt_template_manager, agent, monkeypatch):
+def test_execute_partial_input_template(thought_engine, agent, monkeypatch):
     # Define the test inputs
-    def mock_get_prompt_template(self):
+    def mock_get_thought_template(self):
         content = """        
         inputs:
             type: function
@@ -150,13 +150,13 @@ def test_execute_partial_input_template(prompt_template_manager, agent, monkeypa
             template: |
                 {{name}} - {{name}}
         """
-        return PromptTemplate(
+        return ThoughtTemplate(
             content=content, inputs={}, outputs={}, name="partial_test"
         )
 
     # Use monkeypatch to replace the real function with your mock
     monkeypatch.setattr(
-        prompt_template_manager, "get_prompt_template", mock_get_prompt_template
+        thought_engine, "get_thought_template", mock_get_thought_template
     )
     content = """        
         inputs:
@@ -168,7 +168,7 @@ def test_execute_partial_input_template(prompt_template_manager, agent, monkeypa
     inputs = {"name": "John"}
 
     # Call the execute_template function
-    iprompt, iresult, oprompt, oresult = prompt_template_manager.execute_template(
+    iprompt, iresult, oprompt, oresult = thought_engine.execute_template(
         agent, content, inputs, outputs={}, partial_execution=False
     )
 
@@ -179,7 +179,7 @@ def test_execute_partial_input_template(prompt_template_manager, agent, monkeypa
     assert oresult is None
 
 
-def test_execute_template(prompt_template_manager, agent):
+def test_execute_template(thought_engine, agent):
     # Define the test inputs
     content = """        
         inputs:
@@ -187,17 +187,17 @@ def test_execute_template(prompt_template_manager, agent):
             name:
                 type: string
             template: |
-                I am {{ name }}, what is your name?
+                I am {{name}}, what is your name?
         outputs:
             type: function
             output:
                 type: string                
-            template: "Hello, {{ output }}!"
+            template: "Hello, {{output}}!"
     """
     inputs = {"name": "John"}
 
     # Call the execute_template function
-    iprompt, iresult, oprompt, oresult = prompt_template_manager.execute_template(
+    iprompt, iresult, oprompt, oresult = thought_engine.execute_template(
         agent, content, inputs, outputs={}, partial_execution=False
     )
 
@@ -207,7 +207,7 @@ def test_execute_template(prompt_template_manager, agent):
     assert oresult is not None
 
 
-def test_helper_template(prompt_template_manager, agent):
+def test_helper_template(thought_engine, agent):
     content = """        
         inputs:
             input:
@@ -221,7 +221,7 @@ def test_helper_template(prompt_template_manager, agent):
     """
     inputs = {"input": "hello"}
     # Call the execute_template function
-    iprompt, iresult, oprompt, oresult = prompt_template_manager.execute_template(
+    iprompt, iresult, oprompt, oresult = thought_engine.execute_template(
         agent, content, inputs, outputs={}, partial_execution=False
     )
 
@@ -229,7 +229,7 @@ def test_helper_template(prompt_template_manager, agent):
     assert iresult == "HELLO\n"
 
 
-def test_template_multiple_args(prompt_template_manager, agent):
+def test_template_multiple_args(thought_engine, agent):
     content = """        
         inputs:
             type: function
@@ -242,7 +242,7 @@ def test_template_multiple_args(prompt_template_manager, agent):
     """
     inputs = {"input": "hello", "name": "world"}
     # Call the execute_template function
-    iprompt, iresult, oprompt, oresult = prompt_template_manager.execute_template(
+    iprompt, iresult, oprompt, oresult = thought_engine.execute_template(
         agent, content, inputs, outputs={}, partial_execution=False
     )
 
@@ -250,7 +250,7 @@ def test_template_multiple_args(prompt_template_manager, agent):
     assert iresult.startswith("hello   world")
 
 
-def test_helper_template_multiple_args(prompt_template_manager, agent):
+def test_helper_template_multiple_args(thought_engine, agent):
     content = """        
         inputs:
             input:
@@ -266,7 +266,7 @@ def test_helper_template_multiple_args(prompt_template_manager, agent):
     """
     inputs = {"input": "hello", "name": "world"}
     # Call the execute_template function
-    iprompt, iresult, oprompt, oresult = prompt_template_manager.execute_template(
+    iprompt, iresult, oprompt, oresult = thought_engine.execute_template(
         agent, content, inputs, outputs={}, partial_execution=False
     )
 
@@ -276,7 +276,7 @@ def test_helper_template_multiple_args(prompt_template_manager, agent):
     # Add more test cases as needed
 
 
-def test_input_output_prompts(prompt_template_manager, agent):
+def test_input_output_thoughts(thought_engine, agent):
     content = """        
         inputs:
             type: prompt
@@ -297,7 +297,7 @@ def test_input_output_prompts(prompt_template_manager, agent):
     """
     inputs = {"input": "hello", "name": "world"}
     # Call the execute_template function
-    iprompt, iresult, oprompt, oresult = prompt_template_manager.execute_template(
+    iprompt, iresult, oprompt, oresult = thought_engine.execute_template(
         agent, content, inputs, outputs={}, partial_execution=False
     )
 
@@ -307,9 +307,9 @@ def test_input_output_prompts(prompt_template_manager, agent):
     assert oresult is not None
 
 
-def test_reasoning_evaluation_partials(prompt_template_manager, agent, monkeypatch):
+def test_reasoning_evaluation_partials(thought_engine, agent, monkeypatch):
     # Define the test inputs
-    def mock_get_prompt_template(arg):
+    def mock_get_thought_template(arg):
         if arg == "reasoning":
             content = """        
             inputs:
@@ -340,13 +340,13 @@ def test_reasoning_evaluation_partials(prompt_template_manager, agent, monkeypat
                     was solved and return a score 0.0 to 1.0.
                     """
 
-        return PromptTemplate(
+        return ThoughtTemplate(
             content=content, inputs={}, outputs={}, name="partial_test"
         )
 
     # Use monkeypatch to replace the real function with your mock
     monkeypatch.setattr(
-        prompt_template_manager, "get_prompt_template", mock_get_prompt_template
+        thought_engine, "get_thought_template", mock_get_thought_template
     )
     content = """        
         inputs:
@@ -369,7 +369,7 @@ def test_reasoning_evaluation_partials(prompt_template_manager, agent, monkeypat
     inputs = {"input": "who would win a peck off, a rooster or a tiger?"}
 
     # Call the execute_template function
-    iprompt, iresult, oprompt, oresult = prompt_template_manager.execute_template(
+    iprompt, iresult, oprompt, oresult = thought_engine.execute_template(
         agent, content, inputs, outputs={}, partial_execution=False
     )
 
@@ -382,12 +382,13 @@ def test_reasoning_evaluation_partials(prompt_template_manager, agent, monkeypat
     assert oresult is not None
 
 
-def test_helper_agent_functions(prompt_template_manager, agent):
+def test_helper_agent_functions(thought_engine, agent):
     content = """        
         inputs:
             type: function            
             template: |                
-                Agent type: {{#agent_name}} Memory: {{#memory_store}}
+                Agent type: {{#agent_name}} 
+                Memory: {{#memory_store}}
         helpers:
             agent_name: |
                 def agent_name():
@@ -399,17 +400,17 @@ def test_helper_agent_functions(prompt_template_manager, agent):
     inputs = {}
     agent.memory_store = "my_memory"
     # Call the execute_template function
-    iprompt, iresult, oprompt, oresult = prompt_template_manager.execute_template(
+    iprompt, iresult, oprompt, oresult = thought_engine.execute_template(
         agent, content, inputs, outputs={}, partial_execution=False
     )
 
-    assert iprompt == f"Agent type: {agent.name} Memory: {agent.memory_store}\n"
-    assert iresult == f"Agent type: {agent.name} Memory: {agent.memory_store}\n"
+    assert iprompt == f"Agent type: {agent.name} \nMemory: {agent.memory_store}\n"
+    assert iresult == f"Agent type: {agent.name} \nMemory: {agent.memory_store}\n"
     assert oprompt is None
     assert oresult is None
 
 
-def test_helper_nexus_functions(prompt_template_manager, agent):
+def test_helper_nexus_functions(thought_engine, agent):
     content = """        
         inputs:
             type: function 
@@ -430,7 +431,7 @@ def test_helper_nexus_functions(prompt_template_manager, agent):
     inputs = {"agent": "GroqAgent"}
 
     # Call the execute_template function
-    iprompt, iresult, oprompt, oresult = prompt_template_manager.execute_template(
+    iprompt, iresult, oprompt, oresult = thought_engine.execute_template(
         agent, content, inputs, outputs={}, partial_execution=False
     )
 
@@ -439,43 +440,136 @@ def test_helper_nexus_functions(prompt_template_manager, agent):
     assert oprompt is None
     assert oresult is None
 
-    # Add more test cases as needed
 
-    # inputs:
-    #     type: prompt
-    #     input:
-    #         type: string
-    #     template: |
-    #         {{>header input}}
+def test_basic_planning_thought(thought_engine, agent):
+    content = """
+inputs:
+    type: prompt
+    input:
+        type: string
+    template: |
+        You are a planner for the GPT Nexus.
+        Your job is to create a properly formatted JSON plan step by step, to satisfy the goal given.
+        Create a list of subtasks based off the [GOAL] provided.
+        Each subtask must be from within the [AVAILABLE FUNCTIONS] list. Do not use any functions that are not in the list.
+        Base your decisions on which functions to use from the description and the name of the function.
+        Sometimes, a function may take arguments. Provide them if necessary.
+        The plan should be as short as possible.
+        You will also be given a list of corrective, suggestive and epistemic feedback from previous plans to help you make your decision.
+        For example:
 
-    #         {{#augment_memory input}}
+        [AVAILABLE FUNCTIONS]
+        EmailConnector.LookupContactEmail
+        description: looks up the a contact and retrieves their email address
+        args:
+        - name: the name to look up
 
-    #         {{#augment_knowledge input}}
+        WriterSkill.EmailTo
+        description: email the input text to a recipient
+        args:
+        - input: the text to email
+        - recipient: the recipient's email address. Multiple addresses may be included if separated by ';'.
 
-    #     outputs:
-    #     type: function
-    #     output:
-    #         type: string
-    #     template: "{{#format output}}"
+        WriterSkill.Translate
+        description: translate the input to another language
+        args:
+        - input: the text to translate
+        - language: the language to translate to
 
-    #     helpers:
-    #     # Defines a method to augment the memory of the input
-    #     augment_memory: |
-    #         def augment_memory(this, arg):
-    #             aug = arg
-    #             if agent.memory_store:
-    #                 aug = nexus.apply_memory_RAG(agent.memory_store, arg, agent)
-    #             return aug
+        WriterSkill.Summarize
+        description: summarize input text
+        args:
+        - input: the text to summarize
 
-    #     # Defines a method to augment the knowledge of the input
-    #     augment_knowledge: |
-    #         def augment_knowledge(this, arg):
-    #             aug = arg
-    #             if agent.knowledge_store:
-    #                 aug = nexus.apply_knowledge_RAG(agent.knowledge_store, arg)
-    #             return aug
+        FunSkill.Joke
+        description: Generate a funny joke
+        args:
+        - input: the input to generate a joke about
 
-    #     # Modifies the response to uppercase
-    #     format: |
-    #         def format(response):
-    #             return response.upper()
+        [GOAL]
+        "Tell a joke about cars. Translate it to Spanish"
+
+        [OUTPUT]
+            {
+                "input": "cars",
+                "subtasks": [
+                    {"function": "FunSkill.Joke"},
+                    {"function": "WriterSkill.Translate", "args": {"language": "Spanish"}}
+                ]
+            }
+
+        [AVAILABLE FUNCTIONS]
+        WriterSkill.Brainstorm
+        description: Brainstorm ideas
+        args:
+        - input: the input to brainstorm about
+
+        EdgarAllenPoeSkill.Poe
+        description: Write in the style of author Edgar Allen Poe
+        args:
+        - input: the input to write about
+
+        WriterSkill.EmailTo
+        description: Write an email to a recipient
+        args:
+        - input: the input to write about
+        - recipient: the recipient's email address.
+
+        WriterSkill.Translate
+        description: translate the input to another language
+        args:
+        - input: the text to translate
+        - language: the language to translate to
+
+        [GOAL]
+        "Tomorrow is Valentine's day. I need to come up with a few date ideas.
+        She likes Edgar Allen Poe so write using his style.
+        E-mail these ideas to my significant other. Translate it to French."
+
+        [OUTPUT]
+            {
+                "input": "Valentine's Day Date Ideas",
+                "subtasks": [
+                    {"function": "WriterSkill.Brainstorm"},
+                    {"function": "EdgarAllenPoeSkill.Poe"},
+                    {"function": "WriterSkill.EmailTo", "args": {"recipient": "significant_other"}},
+                    {"function": "WriterSkill.Translate", "args": {"language": "French"}}
+                ]
+            }
+
+        [AVAILABLE FUNCTIONS]
+        {{#available_functions}}
+
+        [GOAL]
+        {{input}}
+
+        [OUTPUT]
+outputs:                
+    type: prompt                
+    output:
+        type: string
+    template: |
+        {{#execute output}}
+    
+helpers:
+    # Defines a method to augment the knowledge of the input
+    available_functions: |
+        def available_functions():
+            return ""
+            
+            
+    # Defines a method to execute the plan
+    execute: |
+        def execute(output):
+            return ""
+    """
+    inputs = {"input": "hello"}
+    # Call the execute_template function
+    iprompt, iresult, oprompt, oresult = thought_engine.execute_template(
+        agent, content, inputs, outputs={}, partial_execution=False
+    )
+
+    assert iprompt is not None
+    assert iresult is not None
+    assert oprompt is not None
+    assert oresult is not None
