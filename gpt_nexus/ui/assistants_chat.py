@@ -75,11 +75,9 @@ def assistants_page(username, win_height):
                     )
 
                 with col_agent:
-                    chat_agent = assistants_panel(nexus)
-                chat_agent.chat_history = messages
-                chat_avatar = chat_agent.profile.avatar
+                    assistant = assistants_panel(nexus)
 
-                if user_input:
+                if assistant and user_input:
                     with placeholder.container():
                         with st.chat_message(username, avatar=user.avatar):
                             st.markdown(user_input)
@@ -87,36 +85,24 @@ def assistants_page(username, win_height):
                                 current_thread.thread_id, username, "user", user_input
                             )
 
-                        with st.chat_message(chat_agent.name, avatar=chat_avatar):
-                            with st.spinner(text="The agent is thinking..."):
+                        with st.chat_message(assistant.name, avatar="👾"):
+                            with st.spinner(text="The assistant is thinking..."):
                                 nexus.set_tracking_id(
                                     f"chat:thread{current_thread.thread_id}:{username}"
                                 )
-                                knowledge_rag = nexus.apply_knowledge_RAG(
-                                    chat_agent.knowledge_store, user_input
-                                )
-                                memory_rag = nexus.apply_memory_RAG(
-                                    chat_agent.memory_store, user_input, chat_agent
-                                )
-                                content = user_input + knowledge_rag + memory_rag
-                                st.write_stream(
-                                    chat_agent.get_response_stream(
-                                        content, current_thread.id
+                                response = st.write_stream(
+                                    nexus.stream_assistant_response(
+                                        current_thread.thread_id,
+                                        assistant.id,
+                                        user_input,
                                     )
-                                )
-                            if chat_agent.memory_store != "None":
-                                nexus.append_memory(
-                                    chat_agent.memory_store,
-                                    user_input,
-                                    chat_agent.last_message,
-                                    chat_agent,
                                 )
                             nexus.set_tracking_id("Not set")
                             nexus.post_message(
                                 current_thread.thread_id,
-                                chat_agent.name,
+                                assistant.name,
                                 "agent",
-                                chat_agent.last_message,
+                                response,
                             )
 
                     st.rerun()

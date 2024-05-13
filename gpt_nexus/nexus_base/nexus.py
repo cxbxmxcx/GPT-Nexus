@@ -61,13 +61,48 @@ class Nexus:
         return self.assistants_manager.list_assistants()
 
     def create_assistant(self, name, instructions, model, tools):
-        return self.assistants_manager.create_assistant(name, instructions, model, type)
+        participant = (
+            ChatParticipants.select().where(ChatParticipants.username == name).first()
+        )
+        if not participant:
+            self.add_participant(
+                name,
+                participant_type="assistant",
+                display_name=name,
+                avatar="👾",
+            )
+        return self.assistants_manager.create_assistant(
+            name, instructions, model, tools
+        )
+
+    def update_assistant(self, assistant_id, name, instructions, model, tool):
+        return self.assistants_manager.update_assistant(
+            assistant_id, name, instructions, model, tool
+        )
 
     def retrieve_assistant(self, assistant_id):
-        return self.assistants_manager.retrieve_assistant(assistant_id)
+        assistant = self.assistants_manager.retrieve_assistant(assistant_id)
+        participant = (
+            ChatParticipants.select()
+            .where(ChatParticipants.username == assistant.name)
+            .first()
+        )
+        if not participant:
+            self.add_participant(
+                assistant.name,
+                participant_type="assistant",
+                display_name=assistant.name,
+                avatar="👾",
+            )
+        return assistant
 
     def delete_assistant(self, assistant_id):
         return self.assistants_manager.delete_assistant(assistant_id)
+
+    def stream_assistant_response(self, thread_id, assistant_id, user_input):
+        return self.assistants_manager.stream_response(
+            thread_id, assistant_id, user_input
+        )
 
     def load_profiles(self):
         profiles = self.profile_manager.agent_profiles

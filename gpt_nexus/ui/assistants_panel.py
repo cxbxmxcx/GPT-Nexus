@@ -36,8 +36,10 @@ def assistants_panel(nexus):
             assistant = nexus.create_assistant(
                 name, instructions, selected_model, tools
             )
-            st.success(f"Assistant created with ID: {assistant.id}")
 
+            st.success(f"Assistant created with ID: {assistant.id}")
+            return assistant
+        return None
     else:
         assistant_id = assistant_options[selected_option]
         assistant = nexus.retrieve_assistant(assistant_id)
@@ -78,3 +80,5 @@ def assistants_panel(nexus):
             st.success("Assistant deleted!")
             time.sleep(1)
             st.rerun()
+
+        return assistant

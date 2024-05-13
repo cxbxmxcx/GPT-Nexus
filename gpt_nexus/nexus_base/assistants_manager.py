@@ -38,3 +38,18 @@ class AssistantsManager:
     def create_thread(self):
         thread = self.client.beta.threads.create()
         return thread
+
+    def stream_response(self, thread_id, assistant_id, content):
+        message = self.client.beta.threads.messages.create(
+            thread_id=thread_id,
+            role="user",
+            content=content,
+        )
+
+        with self.client.beta.threads.runs.stream(
+            thread_id=thread_id,
+            assistant_id=assistant_id,
+            # event_handler=EventHandler(),
+        ) as stream:
+            for text in stream.text_deltas:
+                yield text
