@@ -1,6 +1,6 @@
 import streamlit as st
 
-from gpt_nexus.ui.cache import get_nexus
+from gpt_nexus.streamlit_ui.cache import get_nexus
 
 # def display_profile(profile):
 #     # Use columns to organize the layout

@@ -1,7 +1,7 @@
 import streamlit as st
 
-from gpt_nexus.ui.cache import get_nexus
-from gpt_nexus.ui.embeddings import view_embeddings
+from gpt_nexus.streamlit_ui.cache import get_nexus
+from gpt_nexus.streamlit_ui.embeddings import view_embeddings
 
 
 def add_document_to_store(chat, knowledge_store):

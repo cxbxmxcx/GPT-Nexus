@@ -1,7 +1,7 @@
 import streamlit as st
 
-from gpt_nexus.ui.assistants_panel import assistants_panel
-from gpt_nexus.ui.cache import get_nexus
+from gpt_nexus.streamlit_ui.assistants_panel import assistants_panel
+from gpt_nexus.streamlit_ui.cache import get_nexus
 
 
 def assistants_page(username, win_height):

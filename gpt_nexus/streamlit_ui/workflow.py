@@ -1,8 +1,8 @@
 import streamlit as st
 from barfi import st_barfi
 
-from gpt_nexus.ui.cache import get_nexus
-from gpt_nexus.ui.workflow_logging import display_logs_in_container
+from gpt_nexus.streamlit_ui.cache import get_nexus
+from gpt_nexus.streamlit_ui.workflow_logging import display_logs_in_container
 
 
 def workflow_page(username, win_height):

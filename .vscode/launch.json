@@ -16,7 +16,7 @@
       "type": "debugpy",
       "request": "launch",
       "module": "streamlit",
-      "args": ["run", "gpt_nexus/streamlit_ui.py"],
+      "args": ["run", "gpt_nexus/streamlit_main.py"],
       "justMyCode": True
     },
     {

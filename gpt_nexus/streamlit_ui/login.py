@@ -3,7 +3,7 @@ import time
 import streamlit as st
 from streamlit_js_eval import set_cookie
 
-from gpt_nexus.ui.cache import get_nexus
+from gpt_nexus.streamlit_ui.cache import get_nexus
 
 
 def get_cookie(name, default=None):

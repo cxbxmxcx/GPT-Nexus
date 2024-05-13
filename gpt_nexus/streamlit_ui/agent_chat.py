@@ -1,7 +1,7 @@
 import streamlit as st
 
-from gpt_nexus.ui.agent_panel import agent_panel
-from gpt_nexus.ui.cache import get_nexus
+from gpt_nexus.streamlit_ui.agent_panel import agent_panel
+from gpt_nexus.streamlit_ui.cache import get_nexus
 
 
 def chat_page(username, win_height):

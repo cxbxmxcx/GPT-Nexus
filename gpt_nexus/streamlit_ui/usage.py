@@ -2,7 +2,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from gpt_nexus.ui.cache import get_nexus
+from gpt_nexus.streamlit_ui.cache import get_nexus
 
 
 def usage_page(username, win_height):

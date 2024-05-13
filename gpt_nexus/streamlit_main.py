@@ -3,17 +3,17 @@ import time
 import streamlit as st
 from streamlit_js_eval import set_cookie
 from streamlit_js_eval import streamlit_js_eval as st_js
-from ui.actions import actions_page
-from ui.knowledge import knowledge_page
-from ui.login import login_page
-from ui.memory import memory_page
-from ui.profile import profile_page
-from ui.thought_templates import thought_templates_page
-from ui.usage import usage_page
-from ui.workflow import workflow_page
+from streamlit_ui.actions import actions_page
+from streamlit_ui.knowledge import knowledge_page
+from streamlit_ui.login import login_page
+from streamlit_ui.memory import memory_page
+from streamlit_ui.profile import profile_page
+from streamlit_ui.thought_templates import thought_templates_page
+from streamlit_ui.usage import usage_page
+from streamlit_ui.workflow import workflow_page
 
-from gpt_nexus.ui.agent_chat import chat_page
-from gpt_nexus.ui.assistants_chat import assistants_page
+from gpt_nexus.streamlit_ui.agent_chat import chat_page
+from gpt_nexus.streamlit_ui.assistants_chat import assistants_page
 
 
 def main():

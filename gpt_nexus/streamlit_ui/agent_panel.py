@@ -1,6 +1,6 @@
 import streamlit as st
 
-from gpt_nexus.ui.options import create_options_ui
+from gpt_nexus.streamlit_ui.options import create_options_ui
 
 
 def agent_panel(chat):
