@@ -3,7 +3,7 @@ from typing import List
 import yaml
 from lark import Lark, Token, Transformer, Tree, v_args
 
-from gpt_nexus.nexus_base.chat_models import PromptTemplate, db
+from gpt_nexus.nexus_base.nexus_models import PromptTemplate, db
 
 
 class TemplateTransformer(Transformer):

@@ -5,13 +5,13 @@ import os
 import streamlit as st
 from code_editor import code_editor
 
-from gpt_nexus.ui.agent_panel import agent_panel
-from gpt_nexus.ui.cache import get_chat_system
-from gpt_nexus.ui.options import create_editor_options_ui
+from gpt_nexus.streamlit_ui.agent_panel import agent_panel
+from gpt_nexus.streamlit_ui.cache import get_nexus
+from gpt_nexus.streamlit_ui.options import create_editor_options_ui
 
 
-def thought_templates_page(username):
-    chat = get_chat_system()
+def thought_templates_page(username, win_height):
+    chat = get_nexus()
     user = chat.get_participant(username)
     if user is None:
         st.error("Invalid user")

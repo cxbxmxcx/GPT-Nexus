@@ -1,12 +1,12 @@
 import time
 
-from gpt_nexus.nexus_base.chat_models import (
-    AgentEngineUsage,
-    db,
-)
 from gpt_nexus.nexus_base.context_variables import (
     tracking_function_context,
     tracking_id_context,
+)
+from gpt_nexus.nexus_base.nexus_models import (
+    AgentEngineUsage,
+    db,
 )
 
 

@@ -7,7 +7,7 @@ from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.metrics import silhouette_score
 
-from gpt_nexus.ui.options import create_options_ui
+from gpt_nexus.streamlit_ui.options import create_options_ui
 
 
 def group_items_by_labels(items, labels):

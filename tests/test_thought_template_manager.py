@@ -1,14 +1,14 @@
 import pytest
 
-from gpt_nexus.nexus_base.chat_models import ThoughtTemplate
-from gpt_nexus.nexus_base.chat_system import ChatSystem
+from gpt_nexus.nexus_base.nexus import Nexus
+from gpt_nexus.nexus_base.nexus_models import ThoughtTemplate
 from gpt_nexus.nexus_base.thought_template_manager import ThoughtTemplateManager
 
 
 @pytest.fixture
 def nexus():
-    # Create an instance of ChatSystem for testing
-    return ChatSystem()
+    # Create an instance of Nexus for testing
+    return Nexus()
 
 
 @pytest.fixture

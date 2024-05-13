@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 from gpt_nexus.nexus_base.agent_manager import BaseAgent
-from gpt_nexus.nexus_base.chat_models import Message
+from gpt_nexus.nexus_base.nexus_models import Message
 
 load_dotenv()  # loading and setting the api key can be done in one step
 

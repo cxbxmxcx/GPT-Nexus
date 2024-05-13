@@ -3,7 +3,7 @@ from typing import List
 from fastapi import Depends, FastAPI
 from pydantic import BaseModel
 
-from gpt_nexus.nexus_base.chat_system import ChatSystem
+from gpt_nexus.nexus_base.nexus import ChatSystem
 
 app = FastAPI()
 

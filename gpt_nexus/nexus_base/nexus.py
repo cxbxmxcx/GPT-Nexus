@@ -4,7 +4,14 @@ from peewee import *
 
 from gpt_nexus.nexus_base.action_manager import ActionManager
 from gpt_nexus.nexus_base.agent_manager import AgentManager
-from gpt_nexus.nexus_base.chat_models import (
+from gpt_nexus.nexus_base.assistants_manager import AssistantsManager
+from gpt_nexus.nexus_base.context_variables import (
+    tracking_function_context,
+    tracking_id_context,
+)
+from gpt_nexus.nexus_base.knowledge_manager import KnowledgeManager
+from gpt_nexus.nexus_base.memory_manager import MemoryManager
+from gpt_nexus.nexus_base.nexus_models import (
     ChatParticipants,
     Document,
     KnowledgeStore,
@@ -16,24 +23,19 @@ from gpt_nexus.nexus_base.chat_models import (
     Thread,
     db,
 )
-from gpt_nexus.nexus_base.context_variables import (
-    tracking_function_context,
-    tracking_id_context,
-)
-from gpt_nexus.nexus_base.knowledge_manager import KnowledgeManager
-from gpt_nexus.nexus_base.memory_manager import MemoryManager
 from gpt_nexus.nexus_base.profile_manager import ProfileManager
 from gpt_nexus.nexus_base.thought_template_manager import ThoughtTemplateManager
 from gpt_nexus.nexus_base.tracking_manager import TrackingManager
 
 
-
-class ChatSystem:
+class Nexus:
     def __init__(self):
         self.tracking_manager = TrackingManager()
 
         self.agent_manager = AgentManager(self.tracking_manager)
         self.load_agents()
+
+        self.assistants_manager = AssistantsManager()
 
         self.action_manager = ActionManager()
         self.actions = self.load_actions()
@@ -52,6 +54,55 @@ class ChatSystem:
     def set_tracking_function(self, tracking_function):
         tracking_function_context.set(tracking_function)
 
+    def get_assistants_thread(self, thread_id):
+        return self.assistants_manager.get_thread(thread_id)
+
+    def list_assistants(self):
+        return self.assistants_manager.list_assistants()
+
+    def create_assistant(self, name, instructions, model, tools):
+        participant = (
+            ChatParticipants.select().where(ChatParticipants.username == name).first()
+        )
+        if not participant:
+            self.add_participant(
+                name,
+                participant_type="assistant",
+                display_name=name,
+                avatar="👾",
+            )
+        return self.assistants_manager.create_assistant(
+            name, instructions, model, tools
+        )
+
+    def update_assistant(self, assistant_id, name, instructions, model, tool):
+        return self.assistants_manager.update_assistant(
+            assistant_id, name, instructions, model, tool
+        )
+
+    def retrieve_assistant(self, assistant_id):
+        assistant = self.assistants_manager.retrieve_assistant(assistant_id)
+        participant = (
+            ChatParticipants.select()
+            .where(ChatParticipants.username == assistant.name)
+            .first()
+        )
+        if not participant:
+            self.add_participant(
+                assistant.name,
+                participant_type="assistant",
+                display_name=assistant.name,
+                avatar="👾",
+            )
+        return assistant
+
+    def delete_assistant(self, assistant_id):
+        return self.assistants_manager.delete_assistant(assistant_id)
+
+    def stream_assistant_response(self, thread_id, assistant_id, user_input):
+        return self.assistants_manager.stream_response(
+            thread_id, assistant_id, user_input
+        )
 
     def load_profiles(self):
         profiles = self.profile_manager.agent_profiles
@@ -150,9 +201,13 @@ class ChatSystem:
         users = ChatParticipants.select()
         return [user.username for user in users]
 
-    def create_thread(self, title, participant_id):
+    def create_thread(self, title, participant_id, type="agent"):
+        thread_id = title
+        if type == "assistants":
+            thread = self.assistants_manager.create_thread()
+            thread_id = thread.id
         with db.atomic():
-            thread = Thread.create(title=title)
+            thread = Thread.create(thread_id=thread_id, title=title, type=type)
             Subscriber.create(participant=participant_id, thread=thread)
             return thread
 
@@ -213,11 +268,11 @@ class ChatSystem:
     def get_user_notifications(self, participant_id):
         return Notification.select().where(Notification.participant == participant_id)
 
-    def get_threads_for_user(self, participant_id):
+    def get_threads_for_user(self, participant_id, type="agent"):
         query = (
             Thread.select()
             .join(Subscriber)
-            .where(Subscriber.participant == participant_id)
+            .where(Subscriber.participant == participant_id and Thread.type == type)
             .order_by(Thread.timestamp.desc())
         )
         return list(query.execute())

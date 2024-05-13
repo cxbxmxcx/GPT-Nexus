@@ -3,7 +3,6 @@ from enum import Enum
 
 from peewee import (
     SQL,
-    AutoField,
     CharField,
     DateTimeField,
     ForeignKeyField,
@@ -72,14 +71,16 @@ class ChatParticipants(BaseModel):
 
 
 class Thread(BaseModel):
-    thread_id = AutoField()
+    thread_id = CharField(primary_key=True)
     title = CharField(unique=True)
+    type = CharField()
     timestamp = DateTimeField(constraints=[SQL("DEFAULT CURRENT_TIMESTAMP")])
 
     def to_dict(self):
         return {
             "thread_id": self.thread_id,
             "title": self.title,
+            "type": self.type,
             "timestamp": self.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
         }
 
@@ -152,7 +153,6 @@ class MemoryStore(BaseModel):
 class Document(BaseModel):
     store = ForeignKeyField(KnowledgeStore, backref="documents")
     name = CharField()
-
 
 
 class ThoughtTemplate(BaseModel):
@@ -235,7 +235,6 @@ def initialize_db():
             augmentation_keys="events",
             summarization_prompt="Given a list of events described below, synthesize these into a concise narrative that captures their essence, emotional significance, and any common themes. Focus on the underlying feelings, lessons learned, or how these events collectively shape my understanding of a particular aspect of a problem. Please merge similar events and emphasize unique insights or moments of growth. The aim is to create a compact, meaningful representation of these experiences that reflects their impact on me rather than a detailed account of each event",
         )
-
 
     if not ThoughtTemplate.select().where(ThoughtTemplate.name == "reasoning").exists():
         ThoughtTemplate.create(
