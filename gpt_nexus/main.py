@@ -2,7 +2,7 @@ import os
 import subprocess
 
 
-def run():
+def run_streamlit():
     # Determine the directory of the current file (e.g., the script this function is in)
     dir_path = os.path.dirname(os.path.realpath(__file__))
     # Construct the path to streamlit_ui.py relative to this directory

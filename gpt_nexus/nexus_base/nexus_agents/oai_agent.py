@@ -32,6 +32,7 @@ class OpenAIAgent(BaseAgent):
                 "type": "string",
                 "default": "gpt-4-1106-preview",
                 "options": [
+                    "gpt-4o",
                     "gpt-4-1106-preview",
                     "gpt-3.5-turbo-1106",
                     "gpt-4-0613",

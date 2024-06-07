@@ -21,7 +21,7 @@ def assistants_panel(nexus):
         instructions = st.text_area("Instructions for new Assistant")
 
         # Dropdown for model selection
-        models = ["gpt-3.5-turbo", "gpt-4-turbo"]
+        models = ["gpt-3.5-turbo", "gpt-4-turbo", "gpt-4o"]
         selected_model = st.selectbox("Select Model", models)
 
         # Checkboxes for tools
