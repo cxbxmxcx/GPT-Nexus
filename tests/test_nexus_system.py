@@ -1,6 +1,6 @@
 import pytest
 
-from gpt_nexus.nexus_base.nexus import Nexus
+from nexus.nexus_base.nexus import Nexus
 
 
 @pytest.fixture

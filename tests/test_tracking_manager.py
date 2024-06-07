@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from gpt_nexus.nexus_base.tracking_manager import TrackingManager
+from nexus.nexus_base.tracking_manager import TrackingManager
 
 
 @pytest.fixture

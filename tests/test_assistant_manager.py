@@ -1,6 +1,6 @@
 import pytest
 
-from gpt_nexus.nexus_base.assistants_manager import AssistantsManager
+from nexus.nexus_base.assistants_manager import AssistantsManager
 
 
 @pytest.fixture

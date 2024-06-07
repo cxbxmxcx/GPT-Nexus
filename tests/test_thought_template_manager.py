@@ -1,8 +1,8 @@
 import pytest
 
-from gpt_nexus.nexus_base.nexus import Nexus
-from gpt_nexus.nexus_base.nexus_models import ThoughtTemplate
-from gpt_nexus.nexus_base.thought_template_manager import ThoughtTemplateManager
+from nexus.nexus_base.nexus import Nexus
+from nexus.nexus_base.nexus_models import ThoughtTemplate
+from nexus.nexus_base.thought_template_manager import ThoughtTemplateManager
 
 
 @pytest.fixture
